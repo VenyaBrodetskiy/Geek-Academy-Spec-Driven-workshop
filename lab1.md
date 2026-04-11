@@ -12,7 +12,7 @@ Start with Spec Kit first: turn the rough business request into clear user stori
 - Microsoft Agent Framework (MAF)
 - Microsoft Foundry as the LLM provider
 - Spec Kit
-- Console application with local mock data
+- Console application with local support handbook data
 
 ## Install Spec Kit
 
@@ -27,7 +27,8 @@ Start with Spec Kit first: turn the rough business request into clear user stori
 - A starter repo skeleton in Python and C# (use one)
 - Basic console entry point
 - Placeholder app/orchestration structure
-- Mock customer data and policy data
+- Support handbook with company policy guidance
+- Sample customer requests for testing
 - Incomplete implementation
 
 ## Task
@@ -42,11 +43,12 @@ The implementation approach is intentionally open. You may choose a multi-agent 
 
 These are intentionally written in messy business language. Refine them into proper user stories, clear logic, and technical tasks.
 
-We need something for support because customers write in a very messy way and half the time it is not even clear whether they want a refund, want to cancel, are angry about being charged again, or just want someone to explain what happened. Some of these cases are simple and should just get a normal answer, some are clearly refund or cancellation related, and some are upset enough that they probably need different handling or maybe escalation. The reply should not feel generic because obviously the answer may depend on who the customer is and what their history looks like. Also, please do not let the system invent company rules, because refunds, cancellations, plan limits, and similar things need to match what we actually allow. If the customer did not give enough details, the app should ask for clarification instead of guessing. From the customer side it should feel like one clear support response, not some weird internal handoff, and if the app does not have enough information it should deal with that in a sensible way instead of making things up.
+We need something for support because customers write in a very messy way and half the time it is not even clear whether they want a refund, want to cancel, are angry about being charged again, or just want someone to explain what happened. Some of these cases are simple and should just get a normal answer, some are clearly refund or cancellation related, and some are upset enough that they probably need different handling or maybe escalation. The reply should not feel generic because the answer depends on what the customer actually asked, what details they provided, and what our support handbook allows. Also, please do not let the system invent company rules, because refunds, cancellations, plan limits, and similar things need to match what we actually allow. If the customer did not give enough details, the app should ask for clarification instead of guessing. From the customer side it should feel like one clear support response, not some weird internal handoff, and if the app does not have enough information it should deal with that in a sensible way instead of making things up.
 
 ## Developer Hints
 
-- Use the provided mock data when you need customer-specific information or company policy context.
+- Use the provided support handbook when you need company policy context.
+- Use the sample requests as example scenarios, not as a fixed test suite.
 - The app structure is up to you. Choose the number of agents, workflow steps, or orchestration pattern yourself.
 - A multi-agent design with Microsoft Agent Framework workflows is one good option, but it is not required.
 - Try creating skills, agent instructions, or hooks to speed up development and keep behavior consistent, but it is optional.
@@ -64,5 +66,5 @@ Choose one or more advanced tasks if you finish the main scope earlier.
 - A working Python or C# console app built on top of the provided skeleton
 - A Spec Kit flow that turns rough requests into structured requirements and a plan
 - A customer support flow implemented with MAF
-- Customer-aware and policy-aware responses using local mock data
+- Policy-aware responses using the local support handbook
 - A clean base that can later be extended with MCP in Lab 2

@@ -1,0 +1,14 @@
+{
+  "chat.tools.urls.autoApprove": {
+    "https://github.com/microsoft/agent-framework": true,
+    "https://github.com/microsoft/agent-framework/*": true,
+    "https://raw.githubusercontent.com/microsoft/agent-framework/*": true,
+    "https://github.com/microsoft/Agent-Framework-Samples": true,
+    "https://github.com/microsoft/Agent-Framework-Samples/*": true,
+    "https://learn.microsoft.com/en-us/agent-framework/*": true,
+    "https://devblogs.microsoft.com/agent-framework/*": true,
+    "https://devblogs.microsoft.com/foundry/*": true,
+    "https://www.nuget.org/packages/Microsoft.Agents.AI*": true,
+    "https://pypi.org/project/agent-framework*": true
+  }
+}

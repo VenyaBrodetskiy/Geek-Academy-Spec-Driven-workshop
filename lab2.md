@@ -2,7 +2,19 @@
 
 Continue from your Lab 1 customer support application and extend it with MCP.
 
-Develop a local MCP and integrate it into the existing app, so the system no longer reads everything directly from local code. Instead, use a clean host-tool boundary and call selected capabilities through MCP.
+In Lab 1 your agent only saw the incoming customer message. It had no way to know who
+the customer is, and no way to take concrete business actions beyond generating text.
+In Lab 2 you will close both of those gaps by building a local **SupportOps MCP server**
+that gives the agent two new kinds of capabilities:
+
+- **Data access** — for example customer lookup, so the response can be personalized
+  and so policy rules that depend on history can actually be evaluated.
+- **Support actions** — taking concrete business actions such as creating a ticket,
+  opening an escalation, or recording a refund request.
+
+The host (your Lab 1 app) stops producing text-only outputs and starts calling MCP
+tools where real behavior is needed. The result is a cleaner host/server boundary and
+a demo of how the same agent system can be extended with reusable tools.
 
 ## Technologies
 
@@ -16,49 +28,53 @@ Develop a local MCP and integrate it into the existing app, so the system no lon
 
 ## Starting Point
 
-- The Lab 1 customer support application, or a provided Lab 2 starter based on the same scenario
-- Working multi-agent flow
-- Local mock customer and policy data
-- App capabilities that currently access data or business logic through local code or helper functions
+- Your Lab 1 customer support application (or a provided Lab 2 starter based on the
+  same scenario)
+- Any mock data you introduced in Lab 1 (for example policies). Lab 2 adds a new kind
+  of data — customer information — which you will place inside the MCP server rather
+  than on the host.
 
 ## Task
 
-Extend the customer support app by developing a local MCP for selected support capabilities and integrating it into the existing flow.
+Build a local MCP server that exposes support capabilities, and integrate it into your
+Lab 1 app so the agent calls MCP tools for the new behaviors.
 
-One recommended direction is a hybrid SupportOps MCP that exposes both support data and support actions.
+You decide:
 
-For example:
+- How many tools to expose and what they are called.
+- Which tools are data-access and which are business actions.
+- How the host orchestrates calls to the MCP.
+- Where policy evaluation lives — on the host, inside the MCP, or split between them.
 
-- Customer lookup can move behind an MCP tool
-- Escalation options can be exposed through the MCP
-- Refund eligibility, escalation execution, or support recommendations can be exposed as MCP tools
+Some directions you can consider (pick what fits your Lab 1 implementation — you do
+not need to do all of these):
 
-The app should keep the same end-to-end support behavior from Lab 1, but now use MCP where appropriate instead of relying only on local direct access.
-
-The exact internal design is intentionally open. Choose the number of tools, the MCP shape, and the app orchestration approach that best fits your Lab 1 implementation.
+- A customer lookup tool so the agent can personalize responses.
+- A ticket creation or escalation tool as a mock business action.
+- A refund eligibility tool that applies refund policy rules.
+- A combined `SupportOps` MCP exposing several of the above.
 
 ## Technical Requirements
 
-- Identify selected capabilities currently implemented locally in Lab 1.
-- Move those capabilities behind a local MCP server.
-- Expose both:
-  - support data access
-  - at least one business-support action
-- Integrate the MCP into the existing app so the host calls MCP instead of directly reading all local helpers or mock data.
-- Preserve the same customer-facing support experience while improving host-server boundaries and reuse.
+- Build a local MCP server exposing at least:
+  - one data-access tool
+  - one business-support action tool
+- Integrate the MCP into your Lab 1 app so the host calls MCP where appropriate
+  instead of only producing text.
+- Preserve the same customer-facing support experience from Lab 1.
 - Keep the MCP small and understandable for workshop purposes.
 
 ## Optional Stretch Tasks
 
-- Add one higher-level MCP capability that uses sampling.
-- Use elicitation when the MCP needs more information before completing an action.
+- Add a higher-level MCP capability that uses `sampling`.
+- Use `elicitation` when the MCP needs more information from the host before completing
+  an action.
+- Split the MCP into two smaller servers (data vs. actions) and have the host call both.
 - Improve tool contracts, validation, or error handling.
-- Add a second MCP tool or split responsibilities more cleanly.
 
 ## Outcome
 
 - The Lab 1 console app extended rather than replaced
-- A local MCP added behind a clean host-server boundary
-- The app using MCP-based capabilities inside the existing support flow
-- A clearer separation between orchestration logic and tool implementation
+- A local MCP server added behind a clean host-server boundary
+- At least one real business action taken through the MCP
 - A working end-to-end demo of a customer support request that uses MCP

@@ -6,16 +6,16 @@ scenarios — these are a starting point, not a fixed test set.
 
 ---
 
-## 1. Clear refund — enough info
+## 1. First-month refund — enough info
 
 From: alice@example.com
-Subject: Refund for last month — service was down
+Subject: Refund for new Premium plan
 
 Hi,
 
-Last month (March) the service was basically unusable for a week — I couldn't log in
-between roughly the 12th and the 18th, and I have a Premium plan. I'd like a refund
-for that billing period if possible. Order/charge was on 2026-03-01, $49.99.
+I signed up for Premium on March 30 and I'm writing on April 10. I tried it for
+a few days, but it is not really what I need and I have barely used the account.
+Could you refund the $49.99 charge?
 
 Thanks,
 Alice
@@ -46,16 +46,16 @@ extra one please. thanks
 
 ---
 
-## 4. Cancellation request
+## 4. Cancellation policy question
 
 From: meera.k@example.com
-Subject: Cancel my subscription
+Subject: What happens if I cancel?
 
 Hi support team,
 
-I'd like to cancel my Basic plan. I'm not using it as much as I expected and
-just want to stop the monthly charge. Please confirm when it's done and let me
-know if I keep access until the end of the month.
+I'm thinking about canceling my Basic plan because I'm not using it as much as I
+expected. If I cancel now, do I keep access until the end of the month, and how
+long do you keep my data?
 
 Best,
 Meera
