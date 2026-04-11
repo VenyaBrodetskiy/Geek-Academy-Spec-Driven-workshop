@@ -17,8 +17,8 @@
   <ItemGroup>
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Development.json')" />
-    <Content Include="Data\customers.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Data\policies.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data\support_handbook.md" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Data\sample_requests.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

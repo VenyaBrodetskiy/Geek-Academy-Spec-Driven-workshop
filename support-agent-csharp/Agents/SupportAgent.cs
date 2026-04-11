@@ -6,9 +6,13 @@ using OpenAI.Chat;
 
 namespace SupportAgent.Agents;
 
+// TODO (lab 1): This file is a placeholder to show the minimal pattern for creating
+// and calling a MAF agent. Your real solution will almost certainly replace it with
+// multiple specialized agents (classifier, responder, escalation-prep, etc.) inside
+// a MAF workflow. See lab1.md.
 public static class AgentFactory
 {
-    public static ChatClientAgent Create(IConfiguration config, string customersJson, string policiesJson)
+    public static ChatClientAgent CreatePlaceholderAgent(IConfiguration config)
     {
         var endpoint = RequireConfig(config, "Endpoint");
         var apiKey = RequireConfig(config, "ApiKey");
@@ -20,17 +24,12 @@ public static class AgentFactory
             .GetChatClient(modelName);
 
         return chatClient.AsAIAgent(
-            name: "CustomerSupportAgent",
-            instructions: $"""
-                You are a helpful customer support agent.
-                Use the customer and policy data below to resolve issues accurately.
-                If the data does not contain enough information, ask a concise follow-up question.
-
-                Customers:
-                {customersJson}
-
-                Policies:
-                {policiesJson}
+            name: "PlaceholderSupportAgent",
+            instructions: """
+                You are a friendly customer support assistant.
+                Respond briefly and politely to acknowledge the customer's message.
+                Do not try to solve the issue, do not promise anything, and do not ask
+                for additional information. Keep the reply to two or three sentences.
                 """);
     }
 

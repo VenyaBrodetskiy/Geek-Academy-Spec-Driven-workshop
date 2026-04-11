@@ -2,10 +2,11 @@
 
 Continue from your Lab 1 customer support application and extend it with MCP.
 
-In Lab 1 your agent only saw the incoming customer message. It had no way to know who
-the customer is, and no way to take concrete business actions beyond generating text.
-In Lab 2 you will close both of those gaps by building a local **SupportOps MCP server**
-that gives the agent two new kinds of capabilities:
+In Lab 1 your agent could use the incoming customer message and the local support
+handbook, but it had no way to look up customer/account details and no way to take
+concrete business actions beyond generating text. In Lab 2 you close both of those
+gaps by building a local **SupportOps MCP server** that gives the agent two new kinds
+of capabilities:
 
 - **Data access** — for example customer lookup, so the response can be personalized
   and so policy rules that depend on history can actually be evaluated.

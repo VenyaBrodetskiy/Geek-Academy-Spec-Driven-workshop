@@ -10,37 +10,68 @@ try
         .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
         .Build();
 
-    var orchestrator = new SupportOrchestrator(config);
+    var processor = new SupportRequestProcessor(config);
 
-    ConsoleUi.WriteSectionTitle("Customer Support Agent", ConsoleColor.Cyan);
-    ConsoleUi.WriteColoredLine("Type 'quit' to exit.\n", ConsoleColor.DarkGray);
+    ConsoleUi.WriteSectionTitle("Customer Support — Request Processor", ConsoleColor.Cyan);
+    ConsoleUi.WriteColoredLine(
+        "Paste a customer message, then end it with a line containing only '---'.",
+        ConsoleColor.DarkGray);
+    ConsoleUi.WriteColoredLine("Type 'quit' on its own line to exit.", ConsoleColor.DarkGray);
 
     while (true)
     {
-        ConsoleUi.WriteUserPrompt();
-        var input = Console.ReadLine()?.Trim();
+        ConsoleUi.WriteSectionTitle("Paste customer message (end with '---')", ConsoleColor.Cyan);
 
-        if (string.IsNullOrEmpty(input))
-        {
-            continue;
-        }
-
-        if (input.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
-            input.Equals("exit", StringComparison.OrdinalIgnoreCase))
+        var message = ReadMultilineInput();
+        if (message is null)
         {
             break;
         }
 
-        ConsoleUi.WriteAgentPrompt();
-        await foreach (var chunk in orchestrator.HandleStreamingAsync(input))
+        if (string.IsNullOrWhiteSpace(message))
         {
-            ConsoleUi.WriteAgentChunk(chunk);
+            continue;
         }
-        Console.WriteLine("\n");
+
+        var result = await processor.ProcessAsync(message);
+        SupportRequestRenderer.Render(result);
+
+        ConsoleUi.WriteColoredLine(
+            "\n[Placeholder run — see SupportRequestProcessor.ProcessAsync to replace with your real flow]",
+            ConsoleColor.DarkYellow);
     }
 }
 catch (Exception ex) when (ex is InvalidOperationException or FileNotFoundException)
 {
     Console.Error.WriteLine(ex.Message);
     Environment.ExitCode = 1;
+}
+
+static string? ReadMultilineInput()
+{
+    var lines = new List<string>();
+    while (true)
+    {
+        var line = Console.ReadLine();
+        if (line is null)
+        {
+            return null;
+        }
+
+        var trimmed = line.Trim();
+
+        if (lines.Count == 0 && trimmed.Equals("quit", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (trimmed == "---")
+        {
+            break;
+        }
+
+        lines.Add(line);
+    }
+
+    return string.Join("\n", lines).Trim();
 }
