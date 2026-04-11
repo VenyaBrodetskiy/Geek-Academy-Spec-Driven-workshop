@@ -28,6 +28,6 @@ class SupportOrchestrator:
         return "".join(chunks).strip()
 
     async def handle_stream(self, user_message: str) -> AsyncIterator[str]:
-        async for update in self.agent.run_stream(user_message, session=self.session):
-            if update.text:
+        async for update in self.agent.run(user_message, session=self.session, stream=True):
+            if getattr(update, "text", None):
                 yield update.text
