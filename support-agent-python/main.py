@@ -4,54 +4,74 @@ import sys
 
 from dotenv import load_dotenv
 
-from app.orchestrator import SupportOrchestrator
+from app import renderer
+from app.console_ui import (
+    COLOR_CYAN,
+    COLOR_DARK_YELLOW,
+    COLOR_GRAY,
+    write_colored_line,
+    write_section_title,
+)
+from app.processor import SupportRequestProcessor
 
 load_dotenv(pathlib.Path(__file__).with_name(".env"))
-
-_RESET = "\033[0m"
-_CYAN = "\033[96m"
-_GREEN = "\033[92m"
-_YELLOW = "\033[93m"
-_GRAY = "\033[90m"
-
-
-def _write_prefix(text: str, color: str) -> None:
-    print(f"{color}{text}{_RESET}", end="", flush=True)
-
-
-def _write_chunk(text: str, color: str) -> None:
-    print(f"{color}{text}{_RESET}", end="", flush=True)
 
 
 async def main() -> int:
     try:
-        orchestrator = SupportOrchestrator()
+        processor = SupportRequestProcessor()
     except RuntimeError as ex:
         print(ex)
         return 1
 
-    print(f"{_CYAN}=== Customer Support Agent ==={_RESET}")
-    print(f"{_GRAY}Type 'quit' to exit.{_RESET}\n")
+    write_section_title("Customer Support — Request Processor", COLOR_CYAN)
+    write_colored_line(
+        "Paste a customer message, then end it with a line containing only '---'.",
+        COLOR_GRAY,
+    )
+    write_colored_line("Type 'quit' on its own line to exit.", COLOR_GRAY)
 
     while True:
-        try:
-            _write_prefix("Me > ", _CYAN)
-            user_input = input().strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
+        write_section_title("Paste customer message (end with '---')", COLOR_CYAN)
+
+        message = read_multiline_input()
+        if message is None:
             break
 
-        if user_input.lower() in ("quit", "exit"):
-            break
-        if not user_input:
+        if not message.strip():
             continue
 
-        _write_prefix("Agent > ", _GREEN)
-        async for chunk in orchestrator.handle_stream(user_input):
-            _write_chunk(chunk, _YELLOW)
-        print("\n")
+        result = await processor.process(message)
+        renderer.render(result)
+
+        write_colored_line(
+            "\n[Placeholder run — see SupportRequestProcessor.process to replace with your real flow]",
+            COLOR_DARK_YELLOW,
+        )
 
     return 0
+
+
+def read_multiline_input() -> str | None:
+    lines: list[str] = []
+    while True:
+        try:
+            line = input()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return None
+
+        trimmed = line.strip()
+
+        if not lines and trimmed.lower() == "quit":
+            return None
+
+        if trimmed == "---":
+            break
+
+        lines.append(line)
+
+    return "\n".join(lines).strip()
 
 
 if __name__ == "__main__":
