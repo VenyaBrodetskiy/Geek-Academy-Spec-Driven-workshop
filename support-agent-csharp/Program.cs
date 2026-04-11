@@ -1,3 +1,4 @@
+using Common;
 using Microsoft.Extensions.Configuration;
 using SupportAgent.Orchestration;
 
@@ -11,11 +12,12 @@ try
 
     var orchestrator = new SupportOrchestrator(config);
 
-    Console.WriteLine("Customer Support Agent - type 'quit' to exit\n");
+    ConsoleUi.WriteSectionTitle("Customer Support Agent", ConsoleColor.Cyan);
+    ConsoleUi.WriteColoredLine("Type 'quit' to exit.\n", ConsoleColor.DarkGray);
 
     while (true)
     {
-        Console.Write("You: ");
+        ConsoleUi.WriteUserPrompt();
         var input = Console.ReadLine()?.Trim();
 
         if (string.IsNullOrEmpty(input))
@@ -29,8 +31,12 @@ try
             break;
         }
 
-        var response = await orchestrator.HandleAsync(input);
-        Console.WriteLine($"Agent: {response}\n");
+        ConsoleUi.WriteAgentPrompt();
+        await foreach (var chunk in orchestrator.HandleStreamingAsync(input))
+        {
+            ConsoleUi.WriteAgentChunk(chunk);
+        }
+        Console.WriteLine("\n");
     }
 }
 catch (Exception ex) when (ex is InvalidOperationException or FileNotFoundException)

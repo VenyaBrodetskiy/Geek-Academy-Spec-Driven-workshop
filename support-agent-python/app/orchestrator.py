@@ -1,5 +1,6 @@
 import json
 import pathlib
+from collections.abc import AsyncIterator
 
 from app.agent import create_support_agent
 
@@ -21,5 +22,12 @@ class SupportOrchestrator:
         self.session = self.agent.create_session()
 
     async def handle(self, user_message: str) -> str:
-        response = await self.agent.run(user_message, session=self.session)
-        return response.text.strip()
+        chunks: list[str] = []
+        async for text in self.handle_stream(user_message):
+            chunks.append(text)
+        return "".join(chunks).strip()
+
+    async def handle_stream(self, user_message: str) -> AsyncIterator[str]:
+        async for update in self.agent.run_stream(user_message, session=self.session):
+            if update.text:
+                yield update.text

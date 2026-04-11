@@ -8,6 +8,20 @@ from app.orchestrator import SupportOrchestrator
 
 load_dotenv(pathlib.Path(__file__).with_name(".env"))
 
+_RESET = "\033[0m"
+_CYAN = "\033[96m"
+_GREEN = "\033[92m"
+_YELLOW = "\033[93m"
+_GRAY = "\033[90m"
+
+
+def _write_prefix(text: str, color: str) -> None:
+    print(f"{color}{text}{_RESET}", end="", flush=True)
+
+
+def _write_chunk(text: str, color: str) -> None:
+    print(f"{color}{text}{_RESET}", end="", flush=True)
+
 
 async def main() -> int:
     try:
@@ -16,11 +30,13 @@ async def main() -> int:
         print(ex)
         return 1
 
-    print("Customer Support Agent - type 'quit' to exit\n")
+    print(f"{_CYAN}=== Customer Support Agent ==={_RESET}")
+    print(f"{_GRAY}Type 'quit' to exit.{_RESET}\n")
 
     while True:
         try:
-            user_input = input("You: ").strip()
+            _write_prefix("Me > ", _CYAN)
+            user_input = input().strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -30,8 +46,10 @@ async def main() -> int:
         if not user_input:
             continue
 
-        response = await orchestrator.handle(user_input)
-        print(f"Agent: {response}\n")
+        _write_prefix("Agent > ", _GREEN)
+        async for chunk in orchestrator.handle_stream(user_input):
+            _write_chunk(chunk, _YELLOW)
+        print("\n")
 
     return 0
 

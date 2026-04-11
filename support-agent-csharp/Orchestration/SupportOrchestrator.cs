@@ -24,11 +24,22 @@ public class SupportOrchestrator
     {
         var response = new StringBuilder();
 
-        await foreach (var chunk in _agent.RunStreamingAsync(userMessage, _session))
+        await foreach (var text in HandleStreamingAsync(userMessage))
         {
-            response.Append(chunk.Text);
+            response.Append(text);
         }
 
         return response.ToString().Trim();
+    }
+
+    public async IAsyncEnumerable<string> HandleStreamingAsync(string userMessage)
+    {
+        await foreach (var chunk in _agent.RunStreamingAsync(userMessage, _session))
+        {
+            if (!string.IsNullOrEmpty(chunk.Text))
+            {
+                yield return chunk.Text;
+            }
+        }
     }
 }

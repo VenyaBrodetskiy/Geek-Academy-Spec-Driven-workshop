@@ -19,7 +19,6 @@ public static class AgentFactory
                 new AzureKeyCredential(apiKey))
             .GetChatClient(modelName);
 
-#pragma warning disable OPENAI001
         return chatClient.AsAIAgent(
             name: "CustomerSupportAgent",
             instructions: $"""
@@ -33,7 +32,6 @@ public static class AgentFactory
                 Policies:
                 {policiesJson}
                 """);
-#pragma warning restore OPENAI001
     }
 
     private static string RequireConfig(IConfiguration config, string key)
