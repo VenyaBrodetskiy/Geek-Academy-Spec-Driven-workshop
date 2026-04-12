@@ -21,6 +21,7 @@ flowchart TD
 
   reply[DraftCustomerMessageExecutor\nAI mode=reply]
   clarify[DraftCustomerMessageExecutor\nAI mode=clarification]
+  ack[DraftCustomerMessageExecutor\nAI mode=operational_ack or escalation_ack]
   action[OperationalActionExecutor\nRule-based]
   escalate[PrepareEscalationArtifactExecutor\nHybrid]
   assemble[AssembleSupportResultExecutor\nRule-based]
@@ -34,8 +35,10 @@ flowchart TD
   policy -->|escalate| escalate
 
   clarify --> action
-  action --> reply
-  escalate --> reply
+  action -->|clarification artifact| assemble
+  action -->|refund or cancellation acknowledgement| ack
+  escalate --> ack
+  ack --> assemble
   reply --> assemble
 ```
 
@@ -47,12 +50,11 @@ flowchart TD
   - Load the local handbook text and precompute deterministic keyword signals.
 
 2. `IntakeClassifierExecutor` (AI, structured output)
-  - Produce primary intent, secondary intent cues, sentiment, urgency, missing-information list, and a short summary.
+  - Produce one intent classification, sentiment, urgency, missing-information list, and a short summary.
   - Keep this executor responsible for fuzzy language understanding only.
 
 3. `PolicyGateExecutor` (rule-based)
   - Apply handbook rules deterministically.
-  - Resolve multi-intent conflicts with the spec's risk priority.
   - Compute a route field such as `reply`, `clarification`, `refund_or_cancellation`, or `escalation`.
   - Decide `ActionTaken`, `RecommendedNextAction`, and operator-visible reasoning anchors.
   - Keep branching logic out of prompts and inside code so edges can stay thin.
@@ -162,12 +164,7 @@ This is the key contract rule: edges pass typed context objects; shared state is
 
 4. Direct reply route
   - Trigger for plan questions, policy explanations, and normal complaints that do not meet escalation or clarification rules.
-
-Multi-intent note:
-
-1. The executor chooses one primary intent for `SupportRequestResult.Intent`.
-2. Secondary cues are preserved in `Reasoning`.
-3. If two routes compete, escalation wins first; otherwise clarification wins over operational actions when required information is missing.
+  - Apply explicit guardrails for unsupported exceptions, prohibited disclosures, no pause feature, and no partial-month downgrade credits.
 
 ### AI vs Rule Boundary
 

@@ -12,7 +12,6 @@
 - Q: How should clarification work when the customer message is missing important details? → A: The system is non-interactive and must prepare and send, or imitate sending, a clarification email to the customer instead of collecting more input in the same console session.
 - Q: Should the system produce a full structured SupportRequestResult on every run? → A: Yes, every processed request must populate the full SupportRequestResult contract (with RecommendedNextAction nullable when appropriate).
 - Q: Should behavior-level operational steps (intent analysis, escalation decision, clarification email, escalation handoff) be part of the spec for this console prototype? → A: Yes. They are required system behaviors in scope, and clarification/escalation actions should be imitated locally without calling external APIs.
-- Q: How should requests with multiple possible intents be resolved when output has a single intent field? → A: Choose one primary intent, capture secondary signals in Reasoning, and select ActionTaken by risk priority (escalation > refund/cancellation > clarification > reply).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -48,15 +47,15 @@ As an automated support system owner, I want the system to recognize when the cu
 
 ### User Story 3 - Apply Refund and Cancellation Rules Consistently (Priority: P2)
 
-As a support operator, I want the system to recommend the correct outcome for refund and cancellation cases so that policy-sensitive decisions stay aligned with actual company rules.
+As a support operator, I want the system to prepare the correct outcome for refund and cancellation cases so that policy-sensitive decisions stay aligned with actual company rules.
 
 **Why this priority**: Refunds and cancellations are high-impact topics where fabricated policy or inconsistent handling directly harms customer trust and business operations.
 
-**Independent Test**: Process first-month refund requests, billing-error requests, and cancellation-related messages, and confirm the recommended response reflects handbook rules, timelines, and limits.
+**Independent Test**: Process first-month refund requests, billing-error requests, and cancellation-related messages, and confirm the prepared response reflects handbook rules, timelines, and limits.
 
 **Acceptance Scenarios**:
 
-1. **Given** a first-time Premium customer asks for a refund within about 30 days and says they barely used the product, **When** the request is processed, **Then** the response recommends approving the refund and explains that the refund returns to the original payment method and usually takes 5-7 business days.
+1. **Given** a first-time Premium customer asks for a refund within about 30 days and says they barely used the product, **When** the request is processed, **Then** the response indicates that the refund should be approved and explains that the refund returns to the original payment method and usually takes 5-7 business days.
 2. **Given** a customer asks for refunds covering multiple past months because they forgot to cancel, **When** the request is processed, **Then** the response does not promise retroactive multi-month refunds and stays within the handbook's goodwill limits.
 
 ---
@@ -78,7 +77,6 @@ As a support operator, I want the system to detect when a case should be escalat
 
 ### Edge Cases
 
-- A single message includes multiple intents, such as asking for a refund while also requesting cancellation details.
 - A customer is upset or abusive while also describing a legitimate billing problem that still requires a careful next step.
 - A customer complains without making a clear request, requiring the system to decide whether to clarify, explain, or escalate.
 - A clarification email is required, but the system still needs to keep the output as a single completed processing result for that run.
@@ -90,17 +88,17 @@ As a support operator, I want the system to detect when a case should be escalat
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST analyze each incoming support message and determine the most appropriate next step: direct response, clarification, recommendation, or escalation.
+- **FR-001**: The system MUST analyze each incoming support message and determine the most appropriate next step: direct response, clarification, refund or cancellation handling, or escalation.
 - **FR-002**: The system MUST produce one coherent support response per request rather than exposing internal decision steps or handoffs to the customer.
 - **FR-003**: The system MUST base all policy-sensitive statements on the support handbook and MUST NOT invent rules about refunds, cancellations, pricing, plan limits, credits, data retention, or account access.
 - **FR-004**: The system MUST identify whether a request concerns refunds, cancellations, billing confusion, plan or feature questions, general explanations, dissatisfaction, or escalation triggers.
-- **FR-005**: The system MUST prepare a clarification email when the customer message lacks the information required to provide a reliable answer or recommendation.
+- **FR-005**: The system MUST prepare a clarification email when the customer message lacks the information required to provide a reliable answer or operational handling.
 - **FR-006**: The clarification email MUST state clearly which missing details are needed and why they matter to resolving the request.
 - **FR-007**: The system MUST provide handbook-consistent responses for supported refund and cancellation situations, including first-month refunds, billing errors, post-cancellation access, data retention, and refund timing.
 - **FR-008**: The system MUST provide handbook-consistent responses for plan and policy questions, including Premium-only API access, no pause feature, no partial-month downgrade credits, and no sharing of account details across accounts.
 - **FR-009**: The system MUST recognize escalation triggers, including explicit manager requests, billing disputes over $100, repeated unresolved contact patterns, legal or regulatory language, chargeback threats, and abusive interactions that should be escalated instead of debated.
 - **FR-010**: The system MUST acknowledge the customer's concern before giving the answer or next step, using a short and human tone.
-- **FR-011**: The system MUST make clear whether the output is a direct answer, a clarification request, a recommendation, or an escalation handoff.
+- **FR-011**: The system MUST make clear whether the output is a direct answer, a clarification request, refund or cancellation handling, or an escalation handoff.
 - **FR-012**: The system MUST give the support operator enough rationale to verify that the proposed response is grounded in the handbook.
 - **FR-013**: The system MUST avoid granting unsupported exceptions or disclosing information that the handbook prohibits sharing.
 - **FR-014**: The system MUST handle requests with no explicit ask by choosing a sensible next step that stays within handbook guidance.
@@ -113,31 +111,27 @@ As a support operator, I want the system to detect when a case should be escalat
 - **FR-021**: ActionTaken values MUST map to the allowed set: None, ReplySent, ClarificationRequested, EscalatedToHuman, RefundTicketCreated, or CancellationTicketCreated.
 - **FR-022**: RecommendedNextAction MAY be null only when no additional internal follow-up is required after the selected action.
 - **FR-023**: In the console prototype, clarification email sending and escalation handoff MUST be simulated as explicit system outputs and MUST NOT require external API calls.
-- **FR-024**: When a request contains multiple plausible intents, the system MUST choose one primary intent for the structured result and record secondary intent cues in Reasoning.
-- **FR-025**: For multi-intent or ambiguous conflict cases, ActionTaken selection MUST follow risk-first priority: EscalatedToHuman, then refund/cancellation operational actions, then ClarificationRequested, then ReplySent.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Support Request**: A customer message containing free-form text, account context if available, and any stated subject or sender details.
 - **Support Request Result**: The canonical per-request output contract with classification fields, rationale, selected action, customer-facing response text, and optional follow-up recommendation.
 - **Intent Assessment**: The interpreted purpose of the request, including primary issue type, confidence in that interpretation, and whether more information is required.
-- **Policy Guidance**: The relevant handbook rule or limitation that supports the response, recommendation, or escalation decision.
+- **Policy Guidance**: The relevant handbook rule or limitation that supports the response, operational handling, or escalation decision.
 - **Clarification Email**: A customer-facing message requesting the missing details needed to continue without guessing.
-- **Response Recommendation**: The proposed customer-facing response and the internal action category attached to it.
 - **Escalation Case**: A request that meets handbook escalation criteria and must be routed to senior support.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: In evaluation using the provided sample requests plus at least five additional messy requests, at least 90% of requests are assigned the correct next step on the first pass.
+- **SC-001**: In evaluation using the provided sample requests, at least 90% of requests are assigned the correct next step on the first pass.
 - **SC-002**: In review of policy-sensitive outputs, 100% of responses about refunds, cancellations, plan limits, API access, downgrade behavior, and data retention match the support handbook without invented rules.
 - **SC-003**: For all ambiguous test requests missing critical details, the system produces a clarification email instead of presenting a definitive unsupported answer.
 - **SC-004**: 100% of requests containing handbook escalation triggers are marked for escalation before a final non-escalated response is produced.
 - **SC-005**: For routine requests that do not require clarification or escalation, a support operator can review and reuse the proposed response in under 30 seconds.
 - **SC-006**: 100% of processed requests emit a valid SupportRequestResult object with all required non-null fields populated and enum values constrained to the allowed sets.
 - **SC-007**: For 100% of test cases routed to clarification or escalation, the run produces a clear simulated outbound artifact (clarification email text or escalation handoff output) without external integrations.
-- **SC-008**: In test cases with multiple intent signals, 100% of outputs include exactly one primary intent, include secondary signals in Reasoning, and apply the defined risk-first action priority.
 
 ## Assumptions
 
@@ -146,5 +140,5 @@ As a support operator, I want the system to detect when a case should be escalat
 - External billing, account, and incident data may be unavailable during initial processing; when those details are required, the correct behavior is clarification or escalation rather than guessing.
 - The console app processes a request in one pass and does not collect additional customer answers during the same run.
 - The MVP uses local simulation for outbound email and escalation handoff steps instead of real transport or ticketing integrations.
-- The feature prepares or recommends a response and next step, while final account-changing actions still follow existing human support processes.
+- The feature prepares a response and next step, while final account-changing actions still follow existing human support processes.
 - The provided sample requests are representative examples for evaluation but do not define the full scope of supported customer wording.

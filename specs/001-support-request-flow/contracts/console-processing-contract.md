@@ -60,4 +60,3 @@ Each successful run must produce one `SupportRequestResult` with:
 - No external email, ticketing, or billing APIs are called in the MVP.
 - Simulated artifacts must be clear and human-readable in the console output.
 - Policy-sensitive statements must be handbook-grounded.
-- Multi-intent requests must still emit exactly one primary intent in `SupportRequestResult`.

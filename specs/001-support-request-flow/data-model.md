@@ -40,7 +40,7 @@
   - `MessageMode` (`Reply`, `ClarificationEmail`, `EscalationAcknowledgement`)
   - `ArtifactMode` (optional; `ClarificationEmail`, `RefundTicket`, `CancellationTicket`, `EscalationHandoff`)
 - Validation rules:
-  - Route and `ActionTaken` must follow the spec's risk-first conflict resolution.
+  - Route and `ActionTaken` must remain consistent with the selected workflow branch.
   - `AppliedPolicies` must reference handbook-backed rules only.
 
 ## Entity: CustomerMessageDraft
