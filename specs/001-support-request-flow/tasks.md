@@ -45,10 +45,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement direct-reply handbook rules for plan questions and normal explanations in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
+- [ ] T013 [US1] Implement direct-reply handbook rules for plan questions, unsupported-exception handling, and prohibited-disclosure handling in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
 - [ ] T014 [US1] Implement normal reply drafting mode in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
 - [ ] T015 [US1] Wire the direct-reply branch into the workflow graph in support-agent-csharp/Orchestration/SupportRequestProcessor.cs
-- [ ] T016 [US1] Verify direct-reply scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
+- [ ] T016 [US1] Verify direct-reply scenarios using support-agent-csharp/Data/sample_requests.md plus explicit no-exception and no-cross-account-disclosure cases, and update the validation notes in specs/001-support-request-flow/quickstart.md
 
 **Checkpoint**: User Story 1 should be independently functional for straightforward questions and explanations.
 
@@ -114,7 +114,7 @@
 
 - [ ] T032 [P] Refine intake and drafting prompts for handbook tone consistency in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs and support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
 - [ ] T033 [P] Update final setup and run guidance in support-agent-csharp/README.md and specs/001-support-request-flow/quickstart.md
-- [ ] T034 Run end-to-end build and scenario validation for support-agent-csharp/support-agent-csharp.csproj and reconcile any final output polish in support-agent-csharp/Common/SupportRequestRenderer.cs
+- [ ] T034 Run end-to-end build and route validation for support-agent-csharp/support-agent-csharp.csproj, including SupportRequestResult contract checks for all routes, and reconcile any final output polish in support-agent-csharp/Common/SupportRequestRenderer.cs
 
 ---
 
