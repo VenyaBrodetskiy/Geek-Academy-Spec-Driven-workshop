@@ -61,7 +61,7 @@ flowchart TD
 
 4. `DraftCustomerMessageExecutor` (AI, mode-driven)
   - Reused with different modes: normal reply, clarification email, and escalation acknowledgement.
-  - Constrained by route-specific instructions and handbook excerpts selected by the policy router.
+  - Constrained by route-specific instructions, sentiment-aware acknowledgement guidance, and handbook excerpts selected by the policy router.
 
 5. `OperationalActionExecutor` (rule-based)
   - Create clarification-email dispatch preview, refund/cancellation ticket preview, or other local operational artifact.

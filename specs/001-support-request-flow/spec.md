@@ -98,6 +98,7 @@ As a support operator, I want the system to detect when a case should be escalat
 - **FR-008**: The system MUST provide handbook-consistent responses for plan and policy questions, including Premium-only API access, no pause feature, no partial-month downgrade credits, and no sharing of account details across accounts.
 - **FR-009**: The system MUST recognize escalation triggers, including explicit manager requests, billing disputes over $100, repeated unresolved contact patterns, legal or regulatory language, chargeback threats, and abusive interactions that should be escalated instead of debated.
 - **FR-010**: The system MUST acknowledge the customer's concern before giving the answer or next step, using a short and human tone.
+- **FR-010a**: When sentiment is Frustrated, Angry, or Confused, the customer-facing response MUST include a brief sentiment-appropriate acknowledgement so the message feels empathetic without becoming long, dramatic, or policy-inventing.
 - **FR-011**: The system MUST make clear whether the output is a direct answer, a clarification request, refund or cancellation handling, or an escalation handoff.
 - **FR-012**: The system MUST give the support operator enough rationale to verify that the proposed response is grounded in the handbook.
 - **FR-013**: The system MUST avoid granting unsupported exceptions or disclosing information that the handbook prohibits sharing.
