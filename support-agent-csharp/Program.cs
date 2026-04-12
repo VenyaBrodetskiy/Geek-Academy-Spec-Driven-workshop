@@ -33,17 +33,13 @@ try
             continue;
         }
 
-        var result = await processor.ProcessAsync(message);
-        SupportRequestRenderer.Render(result);
-
-        ConsoleUi.WriteColoredLine(
-            "\n[Placeholder run — see SupportRequestProcessor.ProcessAsync to replace with your real flow]",
-            ConsoleColor.DarkYellow);
+        var outcome = await processor.ProcessAsync(message);
+        SupportRequestRenderer.Render(outcome);
     }
 }
 catch (Exception ex) when (ex is InvalidOperationException or FileNotFoundException)
 {
-    Console.Error.WriteLine(ex.Message);
+    await Console.Error.WriteLineAsync(ex.Message);
     Environment.ExitCode = 1;
 }
 

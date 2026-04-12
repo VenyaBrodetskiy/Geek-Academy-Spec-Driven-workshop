@@ -4,8 +4,10 @@ namespace Common;
 
 public static class SupportRequestRenderer
 {
-    public static void Render(SupportRequestResult result)
+    public static void Render(SupportProcessingOutcome outcome)
     {
+        var result = outcome.Result;
+
         ConsoleUi.WriteSectionTitle("Classification", ConsoleColor.Cyan);
         WriteField("Intent", result.Intent.ToString());
         WriteField("Sentiment", result.Sentiment.ToString());
@@ -26,6 +28,12 @@ public static class SupportRequestRenderer
 
         ConsoleUi.WriteSectionTitle("Customer-Facing Response", ConsoleColor.Green);
         ConsoleUi.WriteColoredLine(result.CustomerFacingResponse, ConsoleColor.Yellow);
+
+        if (outcome.Artifact is not null)
+        {
+            ConsoleUi.WriteSectionTitle(outcome.Artifact.DisplayTitle, ConsoleColor.Magenta);
+            ConsoleUi.WriteColoredLine(outcome.Artifact.Payload, ConsoleColor.Gray);
+        }
     }
 
     private static void WriteField(string label, string value)

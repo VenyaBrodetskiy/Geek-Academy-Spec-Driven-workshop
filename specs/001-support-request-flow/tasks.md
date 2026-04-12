@@ -11,9 +11,9 @@
 
 **Purpose**: Prepare the existing C# skeleton for workflow-based implementation.
 
-- [ ] T001 Add the `Microsoft.Agents.AI.Workflows` package to support-agent-csharp/support-agent-csharp.csproj
-- [ ] T002 [P] Document Azure OpenAI workflow configuration in support-agent-csharp/appsettings.json and support-agent-csharp/README.md
-- [ ] T003 [P] Add shared workflow state constants in support-agent-csharp/Workflow/State/SupportWorkflowState.cs
+- [X] T001 Add the `Microsoft.Agents.AI.Workflows` package to support-agent-csharp/support-agent-csharp.csproj
+- [X] T002 [P] Document Azure OpenAI workflow configuration in support-agent-csharp/appsettings.json and support-agent-csharp/README.md
+- [X] T003 [P] Add shared workflow state constants in support-agent-csharp/Workflow/State/SupportWorkflowState.cs
 
 ---
 
@@ -23,15 +23,15 @@
 
 **⚠️ CRITICAL**: No user story work should start until this phase is complete.
 
-- [ ] T004 [P] Create parsed-request and policy models in support-agent-csharp/Models/ParsedSupportRequest.cs and support-agent-csharp/Models/PolicyDecision.cs
-- [ ] T005 [P] Create intake, draft, artifact, and context contracts in support-agent-csharp/Models/IntakeAssessment.cs, support-agent-csharp/Models/CustomerMessageDraft.cs, support-agent-csharp/Models/SimulatedArtifact.cs, and support-agent-csharp/Models/WorkflowContexts.cs
-- [ ] T006 [P] Create shared workflow events in support-agent-csharp/Workflow/Events/IntakeCompletedEvent.cs, support-agent-csharp/Workflow/Events/PolicyAppliedEvent.cs, support-agent-csharp/Workflow/Events/ArtifactPreparedEvent.cs, and support-agent-csharp/Workflow/Events/ResponseDraftedEvent.cs
-- [ ] T007 Implement the shared Azure OpenAI `IChatClient` factory in support-agent-csharp/Agents/SupportAgent.cs
-- [ ] T008 Implement request normalization and handbook-loading helpers in support-agent-csharp/Workflow/Executors/NormalizeRequestExecutor.cs and support-agent-csharp/Workflow/SupportPolicyRules.cs
-- [ ] T009 Implement structured-output intake classification foundations in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs
-- [ ] T010 Implement the base policy-gate contract and route evaluation shell in support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
-- [ ] T011 Implement final result assembly foundations in support-agent-csharp/Workflow/Executors/AssembleSupportResultExecutor.cs and support-agent-csharp/Common/SupportRequestRenderer.cs
-- [ ] T012 Replace the placeholder processor with workflow construction and execution in support-agent-csharp/Orchestration/SupportRequestProcessor.cs and support-agent-csharp/Program.cs
+- [X] T004 [P] Create parsed-request and policy models in support-agent-csharp/Models/ParsedSupportRequest.cs and support-agent-csharp/Models/PolicyDecision.cs
+- [X] T005 [P] Create intake, draft, artifact, and context contracts in support-agent-csharp/Models/IntakeAssessment.cs, support-agent-csharp/Models/CustomerMessageDraft.cs, support-agent-csharp/Models/SimulatedArtifact.cs, and support-agent-csharp/Models/WorkflowContexts.cs
+- [X] T006 [P] Create shared workflow events in support-agent-csharp/Workflow/Events/IntakeCompletedEvent.cs, support-agent-csharp/Workflow/Events/PolicyAppliedEvent.cs, support-agent-csharp/Workflow/Events/ArtifactPreparedEvent.cs, and support-agent-csharp/Workflow/Events/ResponseDraftedEvent.cs
+- [X] T007 Implement the shared Azure OpenAI `IChatClient` factory in support-agent-csharp/Agents/SupportAgent.cs
+- [X] T008 Implement request normalization and handbook-loading helpers in support-agent-csharp/Workflow/Executors/NormalizeRequestExecutor.cs and support-agent-csharp/Workflow/SupportPolicyRules.cs
+- [X] T009 Implement structured-output intake classification foundations in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs
+- [X] T010 Implement the base policy-gate contract and route evaluation shell in support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
+- [X] T011 Implement final result assembly foundations in support-agent-csharp/Workflow/Executors/AssembleSupportResultExecutor.cs and support-agent-csharp/Common/SupportRequestRenderer.cs
+- [X] T012 Replace the placeholder processor with workflow construction and execution in support-agent-csharp/Orchestration/SupportRequestProcessor.cs and support-agent-csharp/Program.cs
 
 **Checkpoint**: Foundation ready. The app can run a workflow skeleton and emit a `SupportRequestResult` shape, even if story-specific routes are still incomplete.
 
@@ -45,10 +45,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement direct-reply handbook rules for plan questions, unsupported-exception handling, and prohibited-disclosure handling in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
-- [ ] T014 [US1] Implement normal reply drafting mode in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
-- [ ] T015 [US1] Wire the direct-reply branch into the workflow graph in support-agent-csharp/Orchestration/SupportRequestProcessor.cs
-- [ ] T016 [US1] Verify direct-reply scenarios using support-agent-csharp/Data/sample_requests.md plus explicit no-exception and no-cross-account-disclosure cases, and update the validation notes in specs/001-support-request-flow/quickstart.md
+- [X] T013 [US1] Implement direct-reply handbook rules for plan questions, unsupported-exception handling, and prohibited-disclosure handling in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
+- [X] T014 [US1] Implement normal reply drafting mode in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
+- [X] T015 [US1] Wire the direct-reply branch into the workflow graph in support-agent-csharp/Orchestration/SupportRequestProcessor.cs
+- [X] T016 [US1] Verify direct-reply scenarios using support-agent-csharp/Data/sample_requests.md plus explicit no-exception and no-cross-account-disclosure cases, and update the validation notes in specs/001-support-request-flow/quickstart.md
 
 **Checkpoint**: User Story 1 should be independently functional for straightforward questions and explanations.
 
@@ -62,11 +62,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Implement missing-information detection and clarification routing in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
-- [ ] T018 [P] [US2] Implement clarification-email artifact generation in support-agent-csharp/Workflow/Executors/OperationalActionExecutor.cs and support-agent-csharp/Models/SimulatedArtifact.cs
-- [ ] T019 [P] [US2] Extend draft generation for clarification email mode in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
-- [ ] T020 [US2] Wire the clarification branch and final-assembly handling in support-agent-csharp/Orchestration/SupportRequestProcessor.cs and support-agent-csharp/Workflow/Executors/AssembleSupportResultExecutor.cs
-- [ ] T021 [US2] Verify clarification scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
+- [X] T017 [US2] Implement missing-information detection and clarification routing in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
+- [X] T018 [P] [US2] Implement clarification-email artifact generation in support-agent-csharp/Workflow/Executors/OperationalActionExecutor.cs and support-agent-csharp/Models/SimulatedArtifact.cs
+- [X] T019 [P] [US2] Extend draft generation for clarification email mode in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
+- [X] T020 [US2] Wire the clarification branch and final-assembly handling in support-agent-csharp/Orchestration/SupportRequestProcessor.cs and support-agent-csharp/Workflow/Executors/AssembleSupportResultExecutor.cs
+- [X] T021 [US2] Verify clarification scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
 
 **Checkpoint**: User Story 2 should independently produce clarification emails without relying on interactive follow-up.
 
@@ -80,11 +80,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Implement refund and cancellation rule evaluation in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
-- [ ] T023 [P] [US3] Implement refund and cancellation operational artifacts in support-agent-csharp/Workflow/Executors/OperationalActionExecutor.cs
-- [ ] T024 [P] [US3] Extend draft generation for refund and cancellation acknowledgements in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
-- [ ] T025 [US3] Wire the refund/cancellation branch and recommended next-action handling in support-agent-csharp/Orchestration/SupportRequestProcessor.cs and support-agent-csharp/Workflow/Executors/AssembleSupportResultExecutor.cs
-- [ ] T026 [US3] Verify refund and cancellation scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
+- [X] T022 [US3] Implement refund and cancellation rule evaluation in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
+- [X] T023 [P] [US3] Implement refund and cancellation operational artifacts in support-agent-csharp/Workflow/Executors/OperationalActionExecutor.cs
+- [X] T024 [P] [US3] Extend draft generation for refund and cancellation acknowledgements in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
+- [X] T025 [US3] Wire the refund/cancellation branch and recommended next-action handling in support-agent-csharp/Orchestration/SupportRequestProcessor.cs and support-agent-csharp/Workflow/Executors/AssembleSupportResultExecutor.cs
+- [X] T026 [US3] Verify refund and cancellation scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
 
 **Checkpoint**: User Story 3 should independently handle refund and cancellation routes with correct operational artifacts and acknowledgements.
 
@@ -98,11 +98,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T027 [US4] Implement escalation trigger rules, queue selection, and SLA logic in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
-- [ ] T028 [US4] Create escalation event and context contracts in support-agent-csharp/Workflow/Events/EscalationPreparedEvent.cs and support-agent-csharp/Models/WorkflowContexts.cs
-- [ ] T029 [US4] Implement escalation artifact preparation in support-agent-csharp/Workflow/Executors/PrepareEscalationArtifactExecutor.cs
-- [ ] T030 [US4] Extend draft generation and workflow wiring for escalation acknowledgements in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs and support-agent-csharp/Orchestration/SupportRequestProcessor.cs
-- [ ] T031 [US4] Verify escalation scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
+- [X] T027 [US4] Implement escalation trigger rules, queue selection, and SLA logic in support-agent-csharp/Workflow/SupportPolicyRules.cs and support-agent-csharp/Workflow/Executors/PolicyGateExecutor.cs
+- [X] T028 [US4] Create escalation event and context contracts in support-agent-csharp/Workflow/Events/EscalationPreparedEvent.cs and support-agent-csharp/Models/WorkflowContexts.cs
+- [X] T029 [US4] Implement escalation artifact preparation in support-agent-csharp/Workflow/Executors/PrepareEscalationArtifactExecutor.cs
+- [X] T030 [US4] Extend draft generation and workflow wiring for escalation acknowledgements in support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs and support-agent-csharp/Orchestration/SupportRequestProcessor.cs
+- [X] T031 [US4] Verify escalation scenarios using support-agent-csharp/Data/sample_requests.md and update the validation notes in specs/001-support-request-flow/quickstart.md
 
 **Checkpoint**: User Story 4 should independently route and prepare escalation outcomes for high-risk cases.
 
@@ -112,9 +112,9 @@
 
 **Purpose**: Finish tone, documentation, and end-to-end validation across all routes.
 
-- [ ] T032 [P] Refine intake and drafting prompts for handbook tone consistency in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs and support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
-- [ ] T033 [P] Update final setup and run guidance in support-agent-csharp/README.md and specs/001-support-request-flow/quickstart.md
-- [ ] T034 Run end-to-end build and route validation for support-agent-csharp/support-agent-csharp.csproj, including SupportRequestResult contract checks for all routes, and reconcile any final output polish in support-agent-csharp/Common/SupportRequestRenderer.cs
+- [X] T032 [P] Refine intake and drafting prompts for handbook tone consistency in support-agent-csharp/Workflow/Executors/IntakeClassifierExecutor.cs and support-agent-csharp/Workflow/Executors/DraftCustomerMessageExecutor.cs
+- [X] T033 [P] Update final setup and run guidance in support-agent-csharp/README.md and specs/001-support-request-flow/quickstart.md
+- [X] T034 Run end-to-end build and route validation for support-agent-csharp/support-agent-csharp.csproj, including SupportRequestResult contract checks for all routes, and reconcile any final output polish in support-agent-csharp/Common/SupportRequestRenderer.cs
 
 ---
 

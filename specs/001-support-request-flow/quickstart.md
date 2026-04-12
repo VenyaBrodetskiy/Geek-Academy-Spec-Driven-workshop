@@ -64,6 +64,8 @@ dotnet add support-agent-csharp\support-agent-csharp.csproj package Azure.Identi
 2. First-month refund -> refund or refund-review path
 3. Ambiguous billing confusion -> clarification email path
 4. Explicit manager request or chargeback threat -> escalation path
+5. Explicit cancellation request -> cancellation handling path
+6. Cross-account disclosure request -> direct refusal without sharing account details
 
 ## Planned Verification Commands
 
@@ -71,6 +73,23 @@ dotnet add support-agent-csharp\support-agent-csharp.csproj package Azure.Identi
 dotnet build support-agent-csharp\support-agent-csharp.csproj
 dotnet run --project support-agent-csharp\support-agent-csharp.csproj
 ```
+
+## Validation Notes
+
+Validated against the implemented console workflow on 2026-04-12:
+
+1. Direct reply
+  - API access on Basic routed to `ReplySent` with a Premium-only answer.
+2. Clarification
+  - Duplicate-charge complaint routed to `ClarificationRequested` with a clarification email preview.
+3. Refund handling
+  - First-month, low-usage Premium refund routed to `RefundTicketCreated` with a refund review ticket preview.
+4. Cancellation handling
+  - Explicit cancellation request routed to `CancellationTicketCreated` with a cancellation task preview.
+5. Escalation
+  - Manager escalation request routed to `EscalatedToHuman` with an escalation handoff preview.
+6. Disclosure guardrail
+  - Cross-account information request routed to a direct refusal without exposing account or payment details.
 
 ## Implementation Notes
 

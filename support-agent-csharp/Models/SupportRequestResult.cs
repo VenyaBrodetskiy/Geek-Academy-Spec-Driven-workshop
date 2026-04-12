@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace SupportAgent.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Intent
 {
     Unclear,
@@ -9,6 +12,7 @@ public enum Intent
     Complaint
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Sentiment
 {
     Neutral,
@@ -17,6 +21,7 @@ public enum Sentiment
     Confused
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Urgency
 {
     Low,
@@ -24,6 +29,7 @@ public enum Urgency
     High
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ActionTaken
 {
     None,
