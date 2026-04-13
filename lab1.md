@@ -17,7 +17,9 @@ Start with Spec Kit first: turn the rough business request into clear user stori
 ## Install Spec Kit
 
 - GitHub: https://github.com/github/spec-kit
-- Follow the installation guide in the repo README.
+- Spec Kit uses `uv` for the quick-start install below. If `uv` is not installed yet, follow the official uv installation guide: https://docs.astral.sh/uv/getting-started/installation/
+	- Windows PowerShell: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+	- Linux/macOS: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - Quick start in this repo:
 	- `uv tool install specify-cli --from git+https://github.com/github/spec-kit.git`
 	- `specify init --here --ai copilot`
