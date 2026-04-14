@@ -1,22 +1,39 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Server;
 using SupportOpsMcp;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
+const string LocalInspectorCorsPolicy = "LocalInspector";
 
-builder.Logging.AddConsole(consoleLogOptions =>
+if (string.IsNullOrWhiteSpace(builder.Configuration["urls"])
+    && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
 {
-    // Stdio MCP servers must reserve stdout for JSON-RPC protocol traffic.
-    consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
-});
+    builder.WebHost.UseUrls("http://localhost:5058");
+}
 
 builder.Services.AddSingleton<SupportOpsDataStore>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(LocalInspectorCorsPolicy, policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services
     .AddMcpServer()
-    .WithStdioServerTransport()
+    .WithHttpTransport(options =>
+    {
+        options.Stateless = true;
+    })
     .WithToolsFromAssembly(typeof(Program).Assembly, SupportOpsJson.Options);
 
-await builder.Build().RunAsync();
+var app = builder.Build();
+
+app.UseCors(LocalInspectorCorsPolicy);
+
+app.MapGet("/", () => "SupportOps MCP server is running. Use the MCP endpoint at /mcp.");
+app.MapMcp("/mcp");
+
+await app.RunAsync();

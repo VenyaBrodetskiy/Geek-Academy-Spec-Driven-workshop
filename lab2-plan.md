@@ -18,18 +18,19 @@ Verified current direction from official docs:
 
 - Create new project: `support-ops-mcp-csharp`.
 - Do not modify or connect `support-agent-csharp` yet.
-- Implement a local stdio MCP server.
+- Implement a local stateless Streamable HTTP MCP server.
 - Use deterministic tools, not an agent inside the MCP server.
 - Keep the server small enough for workshop participants to understand MCP mechanics before mixing in client-side MAF integration.
 - Treat MAF connection as a separate follow-up investigation.
 
 ## MCP Server Shape
 
-Create a C# console app with:
+Create a C# ASP.NET Core app with:
 
-- `ModelContextProtocol` package, latest stable.
-- `Microsoft.Extensions.Hosting`, matching the repo/.NET version.
-- stdio server transport.
+- `ModelContextProtocol.AspNetCore` package, latest stable.
+- Streamable HTTP transport.
+- `Stateless = true`, because the first server version does not use elicitation, sampling, roots, or other server-to-client requests.
+- local endpoint `http://localhost:5058/mcp`.
 - tool registration through the MCP C# SDK.
 - mock data stored locally in the MCP server project.
 
@@ -55,7 +56,7 @@ Output: mock ticket creation result.
 
 Supported ticket kinds: `refund_review`, `cancellation`, `escalation`.
 
-Keep stdout reserved for MCP protocol traffic. Send diagnostics/logging to stderr.
+Use normal ASP.NET Core logging. HTTP transport does not require stdout to be reserved for protocol traffic.
 
 ## Implementation Notes
 
@@ -96,15 +97,22 @@ Run server build:
 dotnet build support-ops-mcp-csharp
 ```
 
+Run the HTTP MCP server:
+
+```powershell
+dotnet run --project support-ops-mcp-csharp
+```
+
 Validate MCP behavior with MCP Inspector or a tiny local MCP client:
 
-- Server starts over stdio.
+- Server starts at `http://localhost:5058`.
+- MCP endpoint is available at `http://localhost:5058/mcp`.
 - Tool list contains `lookup_customer` and `create_support_ticket`.
 - `lookup_customer("alice@example.com")` returns a Premium customer profile.
 - `lookup_customer("unknown@example.com")` returns `found = false`.
 - `create_support_ticket` returns a generated ticket id and queue.
 - Invalid ticket kind returns a readable error.
-- Server logs do not corrupt stdout.
+- Inspector can connect using Streamable HTTP transport.
 
 ## Assumptions
 
