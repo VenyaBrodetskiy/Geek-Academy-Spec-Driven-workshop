@@ -40,10 +40,6 @@ public class SupportRequestProcessor
                     artifact = artifactPrepared.Artifact;
                     break;
 
-                case EscalationPreparedEvent escalationPrepared:
-                    artifact = escalationPrepared.Context.Artifact;
-                    break;
-
                 case WorkflowErrorEvent errorEvent:
                     throw new InvalidOperationException($"Workflow execution failed: {errorEvent}");
 
@@ -70,21 +66,19 @@ public class SupportRequestProcessor
         var intake = new IntakeClassifierExecutor("intake_classifier", chatClient, supportOpsMcpToolProvider);
         var policyGate = new PolicyGateExecutor("policy_gate");
         var draft = new DraftCustomerMessageExecutor("draft_customer_message", chatClient, policyRules.HandbookText);
-        var action = new OperationalActionExecutor("operational_action");
-        var escalation = new PrepareEscalationArtifactExecutor("prepare_escalation");
+        var ticketAction = new AgenticTicketActionExecutor("agentic_ticket_action", chatClient, supportOpsMcpToolProvider);
+        var clarificationAction = new OperationalActionExecutor("clarification_action");
         var assemble = new AssembleSupportResultExecutor("assemble_result");
 
         return new WorkflowBuilder(normalize)
             .AddEdge(normalize, intake)
             .AddEdge(intake, policyGate)
             .AddEdge<PolicyContext>(policyGate, draft, ctx => ctx is not null && ctx.Policy.Route is PolicyRoute.Reply or PolicyRoute.Clarification)
-            .AddEdge<PolicyContext>(policyGate, action, ctx => ctx is not null && ctx.Policy.Route == PolicyRoute.RefundOrCancellation)
-            .AddEdge<PolicyContext>(policyGate, escalation, ctx => ctx is not null && ctx.Policy.Route == PolicyRoute.Escalation)
-            .AddEdge<DraftedResponseContext>(draft, action, ctx => ctx is not null && ctx.PolicyContext.Policy.Route == PolicyRoute.Clarification)
+            .AddEdge<PolicyContext>(policyGate, ticketAction, ctx => ctx is not null && ctx.Policy.Route is PolicyRoute.RefundOrCancellation or PolicyRoute.Escalation)
+            .AddEdge<DraftedResponseContext>(draft, clarificationAction, ctx => ctx is not null && ctx.PolicyContext.Policy.Route == PolicyRoute.Clarification)
             .AddEdge<DraftedResponseContext>(draft, assemble, ctx => ctx is not null && ctx.PolicyContext.Policy.Route != PolicyRoute.Clarification)
-            .AddEdge<OperationalActionContext>(action, draft, ctx => ctx is not null && ctx.PolicyContext.Policy.Route == PolicyRoute.RefundOrCancellation)
-            .AddEdge<OperationalActionContext>(action, assemble, ctx => ctx is not null && ctx.PolicyContext.Policy.Route == PolicyRoute.Clarification)
-            .AddEdge(escalation, draft)
+            .AddEdge<OperationalActionContext>(ticketAction, draft, ctx => ctx is not null)
+            .AddEdge<OperationalActionContext>(clarificationAction, assemble, ctx => ctx is not null && ctx.PolicyContext.Policy.Route == PolicyRoute.Clarification)
             .WithOutputFrom(assemble)
             .Build();
     }

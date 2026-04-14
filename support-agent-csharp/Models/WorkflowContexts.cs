@@ -25,19 +25,6 @@ public sealed class OperationalActionContext
     public string? OperatorNote { get; init; }
 }
 
-public sealed class EscalationContext
-{
-    public required PolicyContext PolicyContext { get; init; }
-
-    public required SimulatedArtifact Artifact { get; init; }
-
-    public required string Queue { get; init; }
-
-    public required string Sla { get; init; }
-
-    public IReadOnlyList<string> NextSteps { get; init; } = [];
-}
-
 public sealed class DraftedResponseContext
 {
     public required PolicyContext PolicyContext { get; init; }

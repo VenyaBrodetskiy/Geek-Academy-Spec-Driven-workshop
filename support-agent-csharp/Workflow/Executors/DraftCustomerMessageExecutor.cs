@@ -41,8 +41,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
         return protocolBuilder.ConfigureRoutes(routeBuilder =>
             routeBuilder
                 .AddHandler<PolicyContext, DraftedResponseContext>(HandlePolicyAsync)
-                .AddHandler<OperationalActionContext, DraftedResponseContext>(HandleOperationalAsync)
-                .AddHandler<EscalationContext, DraftedResponseContext>(HandleEscalationAsync));
+                .AddHandler<OperationalActionContext, DraftedResponseContext>(HandleOperationalAsync));
     }
 
     private async ValueTask<DraftedResponseContext> HandlePolicyAsync(PolicyContext message, IWorkflowContext context, CancellationToken cancellationToken)
@@ -110,7 +109,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
             Applied handbook facts: {FormatList(message.PolicyContext.Policy.AppliedPolicies)}
             Recommended next action: {message.PolicyContext.Policy.RecommendedNextAction ?? "(none)"}
 
-            Simulated artifact preview:
+            SupportOps artifact:
             {message.Artifact.Payload}
 
             Customer request:
@@ -126,56 +125,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
         var response = await _agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
         var draft = await DeserializeDraftAsync(response.Text, cancellationToken);
 
-        draft.Mode = MessageMode.OperationalAcknowledgement;
-        draft.Body = draft.Body?.Trim() ?? string.Empty;
-
-        await context.AddEventAsync(new ResponseDraftedEvent(draft), cancellationToken);
-        await context.QueueStateUpdateAsync(SupportWorkflowState.KeyDraft, draft, scopeName: SupportWorkflowState.ScopeName);
-
-        return new DraftedResponseContext
-        {
-            PolicyContext = message.PolicyContext,
-            Draft = draft,
-            Artifact = message.Artifact
-        };
-    }
-
-    private async ValueTask<DraftedResponseContext> HandleEscalationAsync(EscalationContext message, IWorkflowContext context, CancellationToken cancellationToken)
-    {
-        _session ??= await _agent.CreateSessionAsync(cancellationToken);
-
-        var prompt =
-            $"""
-            Draft an escalation acknowledgement for a customer.
-
-            Mode: EscalationAcknowledgement
-            Intent: {message.PolicyContext.Intake.PrimaryIntent}
-            Sentiment: {message.PolicyContext.Intake.Sentiment}
-            Tone guidance: {BuildToneGuidance(message.PolicyContext.Intake.Sentiment)}
-            Summary: {message.PolicyContext.Intake.Summary}
-            Queue: {message.Queue}
-            SLA: {message.Sla}
-            Next steps: {FormatList(message.NextSteps)}
-            Applied handbook facts: {FormatList(message.PolicyContext.Policy.AppliedPolicies)}
-
-            Escalation artifact:
-            {message.Artifact.Payload}
-
-            Customer request:
-            {message.PolicyContext.Request.Body}
-
-            Draft requirements:
-            - Acknowledge the concern.
-            - Follow the tone guidance exactly and sound calm, respectful, and human.
-            - Confirm that the case is being escalated.
-            - Do not argue or over-explain.
-            - Mention the expected response timing in plain language.
-            """;
-
-        var response = await _agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
-        var draft = await DeserializeDraftAsync(response.Text, cancellationToken);
-
-        draft.Mode = MessageMode.EscalationAcknowledgement;
+        draft.Mode = message.PolicyContext.Policy.MessageMode;
         draft.Body = draft.Body?.Trim() ?? string.Empty;
 
         await context.AddEventAsync(new ResponseDraftedEvent(draft), cancellationToken);

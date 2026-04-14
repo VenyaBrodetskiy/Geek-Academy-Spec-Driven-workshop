@@ -12,8 +12,7 @@ internal sealed class AssembleSupportResultExecutor(string id) : Executor(id)
             .ConfigureRoutes(routeBuilder =>
                 routeBuilder
                     .AddHandler<DraftedResponseContext>(HandleDraftedAsync)
-                    .AddHandler<OperationalActionContext>(HandleOperationalAsync)
-                    .AddHandler<EscalationContext>(HandleEscalationAsync))
+                    .AddHandler<OperationalActionContext>(HandleOperationalAsync))
             .YieldsOutput<SupportRequestResult>();
     }
 
@@ -29,13 +28,6 @@ internal sealed class AssembleSupportResultExecutor(string id) : Executor(id)
         var draft = await context.ReadStateAsync<CustomerMessageDraft>(SupportWorkflowState.KeyDraft, scopeName: SupportWorkflowState.ScopeName);
         var responseText = draft?.Body ?? message.Artifact.Payload;
         var result = BuildResult(message.PolicyContext, responseText);
-        await context.QueueStateUpdateAsync(SupportWorkflowState.KeyResult, result, scopeName: SupportWorkflowState.ScopeName);
-        await context.YieldOutputAsync(result);
-    }
-
-    private static async ValueTask HandleEscalationAsync(EscalationContext message, IWorkflowContext context)
-    {
-        var result = BuildResult(message.PolicyContext, message.Artifact.Payload);
         await context.QueueStateUpdateAsync(SupportWorkflowState.KeyResult, result, scopeName: SupportWorkflowState.ScopeName);
         await context.YieldOutputAsync(result);
     }
