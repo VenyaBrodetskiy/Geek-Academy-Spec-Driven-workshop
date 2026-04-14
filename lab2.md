@@ -35,6 +35,10 @@ tools where real behavior is needed.
 - Any mock data you introduced in Lab 1 (for example policies). Lab 2 adds a new kind
   of data — customer information — which you will place inside the MCP server rather
   than on the host.
+- Starter customer/account data is provided in `mock-data-lab2/mock_customers.json`.
+  Use it as the operational data source for your MCP customer lookup tool. You may
+  copy it into your MCP server project or load it directly, but keep the sample
+  customer emails so the provided support requests continue to work.
 
 ## Task
 
