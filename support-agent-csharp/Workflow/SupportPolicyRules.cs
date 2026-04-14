@@ -80,10 +80,12 @@ public sealed class SupportPolicyRules
     {
         var normalized = request.NormalizedText;
         var lower = normalized.ToLowerInvariant();
+        var customerFacts = intake.CustomerFacts ?? new CustomerFacts();
         var reasoning = new List<string>
         {
             $"Intake summary: {intake.Summary}",
-            $"Intent={intake.PrimaryIntent}, Sentiment={intake.Sentiment}, Urgency={intake.Urgency}."
+            $"Intent={intake.PrimaryIntent}, Sentiment={intake.Sentiment}, Urgency={intake.Urgency}.",
+            BuildCustomerFactsReasoning(customerFacts)
         };
         var appliedPolicies = new List<string>();
 
@@ -109,11 +111,11 @@ public sealed class SupportPolicyRules
             };
         }
 
-        if (IsClearFirstMonthRefund(request))
+        if (IsClearFirstMonthRefund(request, intake))
         {
             appliedPolicies.Add("Be flexible on refunds in the first month, especially for first-time customers who barely used the product.");
             appliedPolicies.Add("Refunds go back to the original payment method and usually take 5-7 business days.");
-            reasoning.Add("The message clearly fits the first-month low-usage refund pattern, so it should move straight to refund handling.");
+            reasoning.Add("The request and available account facts fit the first-month refund pattern, so it should move straight to refund handling.");
 
             return new PolicyDecision
             {
@@ -146,7 +148,7 @@ public sealed class SupportPolicyRules
         }
 
         var missingInfo = MergeMissingInformation(request, intake, lower);
-        if (ShouldHandleRefund(lower, intake) && HasEnoughRefundDetailToProceed(lower, request))
+        if (ShouldHandleRefund(lower, intake) && HasEnoughRefundDetailToProceed(lower, request, customerFacts))
         {
             missingInfo.Clear();
         }
@@ -312,9 +314,13 @@ public sealed class SupportPolicyRules
     private static List<string> MergeMissingInformation(ParsedSupportRequest request, IntakeAssessment intake, string lower)
     {
         var missing = new HashSet<string>(intake.MissingInformation.Where(item => !string.IsNullOrWhiteSpace(item)), StringComparer.OrdinalIgnoreCase);
-        var hasAmount = AmountRegex.IsMatch(lower);
-        var hasDate = DateRegex.IsMatch(lower);
-        var hasAccountContext = !string.IsNullOrWhiteSpace(request.Sender) || ContainsAny(lower, "account", "plan", "subscription", "card");
+        var customerFacts = intake.CustomerFacts ?? new CustomerFacts();
+        var hasTrustedChargeFacts = HasTrustedChargeAmount(customerFacts) && HasTrustedChargeDate(customerFacts);
+        var hasAmount = AmountRegex.IsMatch(lower) || HasTrustedChargeAmount(customerFacts);
+        var hasDate = DateRegex.IsMatch(lower) || HasTrustedChargeDate(customerFacts);
+        var hasAccountContext = !string.IsNullOrWhiteSpace(request.Sender)
+            || HasTrustedCustomerFacts(customerFacts)
+            || ContainsAny(lower, "account", "plan", "subscription", "card");
 
         if (ContainsAny(lower, ChargedTwicePhrase, DoubleChargePhrase) && (!hasAmount || !hasDate))
         {
@@ -329,6 +335,11 @@ public sealed class SupportPolicyRules
         if ((intake.PrimaryIntent == Intent.Refund || ContainsAny(lower, RefundKeyword, "charged", "billing")) && !hasAmount && !hasDate)
         {
             missing.Add("specific billing details such as date, amount, or charge reference");
+        }
+
+        if (hasTrustedChargeFacts)
+        {
+            missing.RemoveWhere(item => ContainsAny(item, "billing details", "charge date", "amount", "charge reference"));
         }
 
         return missing.ToList();
@@ -347,14 +358,14 @@ public sealed class SupportPolicyRules
             || ContainsAny(lower, RefundKeyword, ChargedTwicePhrase, DoubleChargePhrase, "wrong amount", "charged after cancellation");
     }
 
-    private static bool HasEnoughRefundDetailToProceed(string lower, ParsedSupportRequest request)
+    private static bool HasEnoughRefundDetailToProceed(string lower, ParsedSupportRequest request, CustomerFacts customerFacts)
     {
-        var hasAmount = AmountRegex.IsMatch(lower);
-        var hasDate = DateRegex.IsMatch(lower);
+        var hasAmount = AmountRegex.IsMatch(lower) || HasTrustedChargeAmount(customerFacts);
+        var hasDate = DateRegex.IsMatch(lower) || HasTrustedChargeDate(customerFacts);
         var firstMonthSignals = ContainsAny(lower, "signed up", "barely used", "few days", "not really what i need", "first-time");
         var billingErrorSignals = ContainsAny(lower, ChargedTwicePhrase, DoubleChargePhrase, "wrong amount", "charged after cancellation");
 
-        if (IsClearFirstMonthRefund(request))
+        if (IsClearFirstMonthRefund(request, new IntakeAssessment { PrimaryIntent = Intent.Refund, CustomerFacts = customerFacts }))
         {
             return true;
         }
@@ -364,13 +375,60 @@ public sealed class SupportPolicyRules
             : billingErrorSignals && hasAmount && hasDate;
     }
 
-    private static bool IsClearFirstMonthRefund(ParsedSupportRequest request)
+    private static bool IsClearFirstMonthRefund(ParsedSupportRequest request, IntakeAssessment intake)
     {
         var text = request.RawText.ToLowerInvariant();
 
-        return ContainsAny(text, RefundKeyword)
+        var messageFitsExistingPattern = ContainsAny(text, RefundKeyword)
             && ContainsAny(text, "premium", "signed up", "barely used", "few days", "not really what i need")
             && AmountRegex.IsMatch(text);
+
+        if (messageFitsExistingPattern)
+        {
+            return true;
+        }
+
+        return ShouldHandleRefund(text, intake)
+            && HasInitialSubscriptionCharge(intake.CustomerFacts)
+            && ContainsAny(text, RefundKeyword, "money back", "not really what i need", "barely used", "changed my mind");
+    }
+
+    private static string BuildCustomerFactsReasoning(CustomerFacts customerFacts)
+    {
+        if (!HasTrustedCustomerFacts(customerFacts))
+        {
+            return $"SupportOps lookup status={customerFacts.LookupStatus}.";
+        }
+
+        var charge = customerFacts.LastChargeAmount.HasValue && !string.IsNullOrWhiteSpace(customerFacts.LastChargeDate)
+            ? $" Last charge={customerFacts.LastChargeAmount.Value.ToString("C", CultureInfo.InvariantCulture)} on {customerFacts.LastChargeDate}."
+            : string.Empty;
+
+        return $"SupportOps lookup found customer plan={customerFacts.Plan ?? "unknown"}, status={customerFacts.AccountStatus ?? "unknown"}.{charge}";
+    }
+
+    private static bool HasTrustedCustomerFacts(CustomerFacts? customerFacts)
+        => customerFacts?.LookupStatus == CustomerLookupStatus.Found;
+
+    private static bool HasTrustedChargeAmount(CustomerFacts customerFacts)
+        => HasTrustedCustomerFacts(customerFacts) && customerFacts.LastChargeAmount.HasValue;
+
+    private static bool HasTrustedChargeDate(CustomerFacts customerFacts)
+        => HasTrustedCustomerFacts(customerFacts)
+            && DateOnly.TryParse(customerFacts.LastChargeDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+
+    private static bool HasInitialSubscriptionCharge(CustomerFacts? customerFacts)
+    {
+        if (!HasTrustedCustomerFacts(customerFacts)
+            || !customerFacts!.LastChargeAmount.HasValue
+            || !DateOnly.TryParse(customerFacts.SignupDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var signupDate)
+            || !DateOnly.TryParse(customerFacts.LastChargeDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var lastChargeDate))
+        {
+            return false;
+        }
+
+        return signupDate == lastChargeDate
+            && customerFacts.RefundsLast12Months.GetValueOrDefault() == 0;
     }
 
     private static bool ShouldRefuseDisclosure(string lower)

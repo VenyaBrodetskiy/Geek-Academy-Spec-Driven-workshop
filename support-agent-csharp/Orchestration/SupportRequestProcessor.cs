@@ -2,6 +2,7 @@ using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.AI;
 using SupportAgent.Agents;
+using SupportAgent.Integrations;
 using SupportAgent.Models;
 using SupportAgent.Workflow;
 using SupportAgent.Workflow.Events;
@@ -13,16 +14,18 @@ public class SupportRequestProcessor
 {
     private readonly IChatClient _chatClient;
     private readonly SupportPolicyRules _policyRules;
+    private readonly SupportOpsMcpToolProvider _supportOpsMcpToolProvider;
 
     public SupportRequestProcessor(IConfiguration config)
     {
         _chatClient = AgentFactory.CreateChatClient(config);
         _policyRules = new SupportPolicyRules(SupportPolicyRules.LoadHandbook(AppContext.BaseDirectory));
+        _supportOpsMcpToolProvider = new SupportOpsMcpToolProvider(config);
     }
 
     public async Task<SupportProcessingOutcome> ProcessAsync(string customerMessage)
     {
-        var workflow = BuildWorkflow(_chatClient, _policyRules);
+        var workflow = BuildWorkflow(_chatClient, _policyRules, _supportOpsMcpToolProvider);
 
         var run = await InProcessExecution.RunAsync(workflow, customerMessage);
 
@@ -58,10 +61,13 @@ public class SupportRequestProcessor
         return new SupportProcessingOutcome(result, artifact);
     }
 
-    private static Microsoft.Agents.AI.Workflows.Workflow BuildWorkflow(IChatClient chatClient, SupportPolicyRules policyRules)
+    private static Microsoft.Agents.AI.Workflows.Workflow BuildWorkflow(
+        IChatClient chatClient,
+        SupportPolicyRules policyRules,
+        SupportOpsMcpToolProvider supportOpsMcpToolProvider)
     {
         var normalize = new NormalizeRequestExecutor("normalize_request", policyRules);
-        var intake = new IntakeClassifierExecutor("intake_classifier", chatClient);
+        var intake = new IntakeClassifierExecutor("intake_classifier", chatClient, supportOpsMcpToolProvider);
         var policyGate = new PolicyGateExecutor("policy_gate");
         var draft = new DraftCustomerMessageExecutor("draft_customer_message", chatClient, policyRules.HandbookText);
         var action = new OperationalActionExecutor("operational_action");
