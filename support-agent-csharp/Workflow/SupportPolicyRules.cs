@@ -11,6 +11,7 @@ public sealed class SupportPolicyRules
     private const string DoubleChargePhrase = "double charge";
     private const string LawyerKeyword = "lawyer";
     private const string ChargebackKeyword = "chargeback";
+    private static readonly CultureInfo CurrencyCulture = CultureInfo.GetCultureInfo("en-US");
     private static readonly Regex AmountRegex = new(@"\$(?<amount>\d+(?:\.\d{1,2})?)", RegexOptions.Compiled);
     private static readonly Regex DateRegex = new(@"\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2}\b|\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -155,7 +156,7 @@ public sealed class SupportPolicyRules
 
         if (missingInfo.Count > 0)
         {
-            reasoning.Add($"Clarification required before safe handling: {string.Join(", ", missingInfo)}.");
+            reasoning.Add($"Clarification required before safe handling: {string.Join(", ", missingInfo.Select(TrimTrailingPeriod))}.");
             appliedPolicies.Add("Do not guess when billing or refund details are missing; ask for the specific facts needed to continue.");
 
             return new PolicyDecision
@@ -322,9 +323,10 @@ public sealed class SupportPolicyRules
             || HasTrustedCustomerFacts(customerFacts)
             || ContainsAny(lower, "account", "plan", "subscription", "card");
 
-        if (ContainsAny(lower, ChargedTwicePhrase, DoubleChargePhrase) && (!hasAmount || !hasDate))
+        if (IsDuplicateChargeDispute(lower))
         {
-            missing.Add("charge date and amount");
+            missing.RemoveWhere(item => ContainsAny(item, "double", "duplicate", "second charge", "charged twice"));
+            missing.Add("duplicate charge evidence such as both charge dates, both amounts, or a statement screenshot");
         }
 
         if (ContainsAny(lower, "declined", "what is happening", "don't know what i'm paying for") && !hasAccountContext)
@@ -337,7 +339,7 @@ public sealed class SupportPolicyRules
             missing.Add("specific billing details such as date, amount, or charge reference");
         }
 
-        if (hasTrustedChargeFacts)
+        if (hasTrustedChargeFacts && !IsDuplicateChargeDispute(lower))
         {
             missing.RemoveWhere(item => ContainsAny(item, "billing details", "charge date", "amount", "charge reference"));
         }
@@ -364,6 +366,11 @@ public sealed class SupportPolicyRules
         var hasDate = DateRegex.IsMatch(lower) || HasTrustedChargeDate(customerFacts);
         var firstMonthSignals = ContainsAny(lower, "signed up", "barely used", "few days", "not really what i need", "first-time");
         var billingErrorSignals = ContainsAny(lower, ChargedTwicePhrase, DoubleChargePhrase, "wrong amount", "charged after cancellation");
+
+        if (IsDuplicateChargeDispute(lower))
+        {
+            return false;
+        }
 
         if (IsClearFirstMonthRefund(request, new IntakeAssessment { PrimaryIntent = Intent.Refund, CustomerFacts = customerFacts }))
         {
@@ -401,7 +408,7 @@ public sealed class SupportPolicyRules
         }
 
         var charge = customerFacts.LastChargeAmount.HasValue && !string.IsNullOrWhiteSpace(customerFacts.LastChargeDate)
-            ? $" Last charge={customerFacts.LastChargeAmount.Value.ToString("C", CultureInfo.InvariantCulture)} on {customerFacts.LastChargeDate}."
+            ? $" Last charge={customerFacts.LastChargeAmount.Value.ToString("C", CurrencyCulture)} on {customerFacts.LastChargeDate}."
             : string.Empty;
 
         return $"SupportOps lookup found customer plan={customerFacts.Plan ?? "unknown"}, status={customerFacts.AccountStatus ?? "unknown"}.{charge}";
@@ -435,6 +442,19 @@ public sealed class SupportPolicyRules
     {
         return ContainsAny(lower, "colleague", "another account", "someone else's account", "what plan they're on", "what card is being charged");
     }
+
+    private static bool IsDuplicateChargeDispute(string lower)
+        => ContainsAny(
+            lower,
+            ChargedTwicePhrase,
+            DoubleChargePhrase,
+            "charged me twice",
+            "charged us twice",
+            "charged my card twice",
+            "charged two times",
+            "charged 2 times",
+            "duplicate charge",
+            "duplicate billing");
 
     private static List<string> GetRefundPolicies(string lower)
     {
@@ -520,7 +540,10 @@ public sealed class SupportPolicyRules
 
         AddSignalIf(signals, lower, RefundKeyword, "refund");
         AddSignalIf(signals, lower, "cancel", "cancellation");
-        AddSignalIf(signals, lower, ChargedTwicePhrase, "double-charge");
+        if (IsDuplicateChargeDispute(lower))
+        {
+            signals.Add("double-charge");
+        }
         AddSignalIf(signals, lower, "manager", "manager-request");
         AddSignalIf(signals, lower, ChargebackKeyword, "chargeback");
         AddSignalIf(signals, lower, LawyerKeyword, "legal-language");
@@ -545,6 +568,9 @@ public sealed class SupportPolicyRules
         var collapsed = Regex.Replace(text, @"\s+", " ");
         return collapsed.Trim();
     }
+
+    private static string TrimTrailingPeriod(string value)
+        => value.Trim().TrimEnd('.');
 
     private static bool ContainsAny(string text, params string[] needles)
         => needles.Any(needle => text.Contains(needle, StringComparison.OrdinalIgnoreCase));

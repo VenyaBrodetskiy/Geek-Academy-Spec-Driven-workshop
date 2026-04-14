@@ -14,8 +14,7 @@ of capabilities:
   opening an escalation, or recording a refund request.
 
 The host (your Lab 1 app) stops producing text-only outputs and starts calling MCP
-tools where real behavior is needed. The result is a cleaner host/server boundary and
-a demo of how the same agent system can be extended with reusable tools.
+tools where real behavior is needed.
 
 ## Technologies
 

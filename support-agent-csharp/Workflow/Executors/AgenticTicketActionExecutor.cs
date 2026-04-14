@@ -39,7 +39,7 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
         await AddTraceAsync(
             context,
             "Ticket action",
-            $"Policy route requires a {expectedTicketKind} SupportOps ticket.",
+            $"Policy route requires {ArticleFor(DisplayTicketKind(expectedTicketKind))} {DisplayTicketKind(expectedTicketKind)} SupportOps ticket.",
             cancellationToken);
 
         AIAgent agent;
@@ -184,6 +184,20 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
             ActionTaken.CancellationTicketCreated => "cancellation",
             ActionTaken.EscalatedToHuman => "escalation",
             _ => throw new InvalidOperationException($"Unsupported ticket action: {actionTaken}.")
+        };
+    }
+
+    private static string ArticleFor(string value)
+        => value.StartsWith("e", StringComparison.OrdinalIgnoreCase) ? "an" : "a";
+
+    private static string DisplayTicketKind(string ticketKind)
+    {
+        return ticketKind switch
+        {
+            "refund_review" => "refund review",
+            "cancellation" => "cancellation",
+            "escalation" => "escalation",
+            _ => ticketKind.Replace('_', ' ')
         };
     }
 

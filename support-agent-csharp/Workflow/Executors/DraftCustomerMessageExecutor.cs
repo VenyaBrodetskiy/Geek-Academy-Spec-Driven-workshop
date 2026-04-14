@@ -27,6 +27,8 @@ internal sealed class DraftCustomerMessageExecutor : Executor
                     Return JSON that matches the schema exactly.
                     Keep the tone short, human, and calm.
                     Do not invent company rules, features, or exceptions.
+                    For account or billing facts, use cautious wording like "your account shows" or "our records show".
+                    Do not imply the customer definitely chose something, remembered incorrectly, or caused the issue.
                     Do not use markdown.
                     """,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<CustomerMessageDraft>()
@@ -59,6 +61,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
             Urgency: {message.Intake.Urgency}
             Tone guidance: {BuildToneGuidance(message.Intake.Sentiment)}
             Summary: {message.Intake.Summary}
+            Customer facts: {FormatCustomerFacts(message.Intake.CustomerFacts)}
             Missing information: {FormatList(message.Intake.MissingInformation)}
             Applied handbook facts: {FormatList(message.Policy.AppliedPolicies)}
             Recommended next action: {message.Policy.RecommendedNextAction ?? "(none)"}
@@ -74,6 +77,9 @@ internal sealed class DraftCustomerMessageExecutor : Executor
             - Follow the tone guidance exactly and match the empathy to the customer's sentiment.
             - If Mode is ClarificationEmail, ask only for the missing details needed to continue.
             - If Mode is Reply, answer directly and clearly.
+            - For billing/account explanations, say what the account records show without assigning blame or saying the customer "must have" done something.
+            - Do not mention refund eligibility, refund flexibility, or likely refund outcomes unless the applied handbook facts include a refund policy.
+            - For ambiguous billing questions, say support can review a refund if the customer wants that path.
             - Keep the message concise.
             """;
 
@@ -113,6 +119,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
             Sentiment: {message.PolicyContext.Intake.Sentiment}
             Tone guidance: {BuildToneGuidance(message.PolicyContext.Intake.Sentiment)}
             Summary: {message.PolicyContext.Intake.Summary}
+            Customer facts: {FormatCustomerFacts(message.PolicyContext.Intake.CustomerFacts)}
             Applied handbook facts: {FormatList(message.PolicyContext.Policy.AppliedPolicies)}
             Recommended next action: {message.PolicyContext.Policy.RecommendedNextAction ?? "(none)"}
 
@@ -151,6 +158,13 @@ internal sealed class DraftCustomerMessageExecutor : Executor
     {
         var values = items.Where(item => !string.IsNullOrWhiteSpace(item)).ToList();
         return values.Count == 0 ? "(none)" : string.Join("; ", values);
+    }
+
+    private static string FormatCustomerFacts(CustomerFacts customerFacts)
+    {
+        return customerFacts.LookupStatus == CustomerLookupStatus.Found
+            ? $"lookup_status={customerFacts.LookupStatus}; email={customerFacts.Email ?? "(unknown)"}; plan={customerFacts.Plan ?? "(unknown)"}; account_status={customerFacts.AccountStatus ?? "(unknown)"}; last_charge_amount={customerFacts.LastChargeAmount?.ToString() ?? "(unknown)"}; last_charge_date={customerFacts.LastChargeDate ?? "(unknown)"}"
+            : $"lookup_status={customerFacts.LookupStatus}";
     }
 
     private static string BuildToneGuidance(Sentiment sentiment)
