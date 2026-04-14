@@ -3,11 +3,7 @@ using SupportOpsMcp;
 var builder = WebApplication.CreateBuilder(args);
 const string LocalInspectorCorsPolicy = "LocalInspector";
 
-if (string.IsNullOrWhiteSpace(builder.Configuration["urls"])
-    && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
-{
-    builder.WebHost.UseUrls("http://localhost:5058");
-}
+builder.WebHost.UseUrls("http://localhost:5058");
 
 builder.Services.AddSingleton<SupportOpsDataStore>();
 builder.Services.AddSingleton<SupportTicketStorage>();

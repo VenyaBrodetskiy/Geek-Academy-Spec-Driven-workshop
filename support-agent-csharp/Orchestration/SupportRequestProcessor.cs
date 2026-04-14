@@ -23,35 +23,37 @@ public class SupportRequestProcessor
         _supportOpsMcpToolProvider = new SupportOpsMcpToolProvider(config);
     }
 
-    public async Task<SupportProcessingOutcome> ProcessAsync(string customerMessage)
+    public async Task<SupportProcessingOutcome> ProcessAsync(
+        string customerMessage,
+        Action<WorkflowTraceStep>? onTraceStep = null)
     {
         var workflow = BuildWorkflow(_chatClient, _policyRules, _supportOpsMcpToolProvider);
 
-        var run = await InProcessExecution.RunAsync(workflow, customerMessage);
+        await using var run = await InProcessExecution.OffThread.RunStreamingAsync(workflow, customerMessage);
 
         SupportRequestResult? result = null;
         SimulatedArtifact? artifact = null;
         var trace = new List<WorkflowTraceStep>();
 
-        foreach (var workflowEvent in run.NewEvents)
+        await foreach (var workflowEvent in run.WatchStreamAsync())
         {
             switch (workflowEvent)
             {
                 case IntakeCompletedEvent intakeCompleted:
-                    trace.Add(BuildIntakeTrace(intakeCompleted.Context));
+                    AddTrace(BuildIntakeTrace(intakeCompleted.Context));
                     break;
 
                 case PolicyAppliedEvent policyApplied:
-                    trace.Add(BuildPolicyTrace(policyApplied.Context));
+                    AddTrace(BuildPolicyTrace(policyApplied.Context));
                     break;
 
                 case ArtifactPreparedEvent artifactPrepared:
                     artifact = artifactPrepared.Artifact;
-                    trace.Add(BuildArtifactTrace(artifactPrepared.Artifact));
+                    AddTrace(BuildArtifactTrace(artifactPrepared.Artifact));
                     break;
 
                 case ResponseDraftedEvent responseDrafted:
-                    trace.Add(BuildDraftTrace(responseDrafted.Draft));
+                    AddTrace(BuildDraftTrace(responseDrafted.Draft));
                     break;
 
                 case WorkflowErrorEvent errorEvent:
@@ -59,7 +61,7 @@ public class SupportRequestProcessor
 
                 case WorkflowOutputEvent outputEvent when outputEvent.Is<SupportRequestResult>():
                     result = outputEvent.As<SupportRequestResult>();
-                    trace.Add(new WorkflowTraceStep("Complete", "SupportRequestResult produced."));
+                    AddTrace(new WorkflowTraceStep("Complete", "SupportRequestResult produced."));
                     break;
             }
         }
@@ -70,6 +72,12 @@ public class SupportRequestProcessor
         }
 
         return new SupportProcessingOutcome(result, artifact, trace);
+
+        void AddTrace(WorkflowTraceStep step)
+        {
+            trace.Add(step);
+            onTraceStep?.Invoke(step);
+        }
     }
 
     private static WorkflowTraceStep BuildIntakeTrace(IntakeContext context)
