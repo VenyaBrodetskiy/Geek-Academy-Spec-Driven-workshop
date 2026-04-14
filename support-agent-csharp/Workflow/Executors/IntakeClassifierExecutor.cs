@@ -38,6 +38,7 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
 
     public override async ValueTask<IntakeContext> HandleAsync(ParsedSupportRequest message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
+        await AddTraceAsync(context, "Intake", "Preparing classifier agent.", cancellationToken);
         _session ??= await _agent.CreateSessionAsync(cancellationToken);
 
         var prompt =
@@ -53,6 +54,7 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
             """;
 
         var response = await _agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
+        await AddTraceAsync(context, "Intake", "Classifier agent returned a response.", cancellationToken);
         var intake = await DeserializeIntakeAsync(response.Text, cancellationToken);
 
         intake.MissingInformation ??= [];
@@ -98,4 +100,12 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
 
         throw new InvalidOperationException("Failed to deserialize IntakeAssessment after JSON repair retry.");
     }
+
+    private static ValueTask AddTraceAsync(
+        IWorkflowContext context,
+        string stage,
+        string detail,
+        CancellationToken cancellationToken)
+        => context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(stage, detail, WorkflowTraceStepKind.Detail)), cancellationToken);
 }

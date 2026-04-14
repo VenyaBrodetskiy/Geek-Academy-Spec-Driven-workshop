@@ -33,8 +33,21 @@ try
             continue;
         }
 
-        var outcome = await processor.ProcessAsync(message);
-        SupportRequestRenderer.Render(outcome);
+        var traceHeaderRendered = false;
+        var outcome = await processor.ProcessAsync(
+            message,
+            step =>
+            {
+                if (!traceHeaderRendered)
+                {
+                    SupportRequestRenderer.RenderTraceHeader();
+                    traceHeaderRendered = true;
+                }
+
+                SupportRequestRenderer.RenderTraceStep(step);
+            });
+
+        SupportRequestRenderer.Render(outcome, includeTrace: false);
     }
 }
 catch (Exception ex) when (ex is InvalidOperationException or FileNotFoundException)

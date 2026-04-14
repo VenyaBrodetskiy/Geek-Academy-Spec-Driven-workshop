@@ -47,4 +47,7 @@ public sealed class DraftedResponseContext
     public SimulatedArtifact? Artifact { get; init; }
 }
 
-public sealed record SupportProcessingOutcome(SupportRequestResult Result, SimulatedArtifact? Artifact);
+public sealed record SupportProcessingOutcome(
+    SupportRequestResult Result,
+    SimulatedArtifact? Artifact,
+    IReadOnlyList<WorkflowTraceStep> Trace);

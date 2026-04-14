@@ -1,5 +1,6 @@
 using Microsoft.Agents.AI.Workflows;
 using SupportAgent.Models;
+using SupportAgent.Persistence;
 using SupportAgent.Workflow.Events;
 using SupportAgent.Workflow.State;
 
@@ -17,6 +18,12 @@ internal sealed class OperationalActionExecutor(string id) : Executor(id)
 
     private static async ValueTask<OperationalActionContext> HandlePolicyAsync(PolicyContext message, IWorkflowContext context)
     {
+        await context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(
+                "Artifact",
+                $"Preparing {message.Policy.ActionTaken} artifact.",
+                WorkflowTraceStepKind.Detail)));
+
         var artifact = message.Policy.ActionTaken switch
         {
             ActionTaken.RefundTicketCreated => BuildRefundArtifact(message),
@@ -24,6 +31,12 @@ internal sealed class OperationalActionExecutor(string id) : Executor(id)
             _ => throw new InvalidOperationException($"Unsupported action for operational handling: {message.Policy.ActionTaken}.")
         };
 
+        LocalTicketStorage.PersistIfTicketArtifact(artifact);
+        await context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(
+                "Storage",
+                $"Persisted ticket artifact {artifact.Metadata["ticket_id"]}.",
+                WorkflowTraceStepKind.Detail)));
         await context.AddEventAsync(new ArtifactPreparedEvent(artifact));
         await context.QueueStateUpdateAsync(SupportWorkflowState.KeyArtifact, artifact, scopeName: SupportWorkflowState.ScopeName);
 
@@ -37,6 +50,12 @@ internal sealed class OperationalActionExecutor(string id) : Executor(id)
 
     private static async ValueTask<OperationalActionContext> HandleDraftAsync(DraftedResponseContext message, IWorkflowContext context)
     {
+        await context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(
+                "Artifact",
+                "Preparing deterministic clarification email artifact.",
+                WorkflowTraceStepKind.Detail)));
+
         var artifact = new SimulatedArtifact
         {
             ArtifactType = ArtifactType.ClarificationEmail,

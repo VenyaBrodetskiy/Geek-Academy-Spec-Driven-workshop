@@ -4,9 +4,18 @@ namespace Common;
 
 public static class SupportRequestRenderer
 {
-    public static void Render(SupportProcessingOutcome outcome)
+    public static void Render(SupportProcessingOutcome outcome, bool includeTrace = true)
     {
         var result = outcome.Result;
+
+        if (includeTrace && outcome.Trace.Count > 0)
+        {
+            RenderTraceHeader();
+            foreach (var step in outcome.Trace)
+            {
+                RenderTraceStep(step);
+            }
+        }
 
         ConsoleUi.WriteSectionTitle("Classification", ConsoleColor.Cyan);
         WriteField("Intent", result.Intent.ToString());
@@ -34,6 +43,21 @@ public static class SupportRequestRenderer
             ConsoleUi.WriteSectionTitle(outcome.Artifact.DisplayTitle, ConsoleColor.Magenta);
             ConsoleUi.WriteColoredLine(outcome.Artifact.Payload, ConsoleColor.Gray);
         }
+    }
+
+    public static void RenderTraceHeader()
+        => ConsoleUi.WriteSectionTitle("Agent Trace", ConsoleColor.DarkGray);
+
+    public static void RenderTraceStep(WorkflowTraceStep step)
+    {
+        var prefix = step.Kind switch
+        {
+            WorkflowTraceStepKind.Detail => "   .",
+            WorkflowTraceStepKind.Error => "  !",
+            _ => "  -"
+        };
+
+        ConsoleUi.WriteColoredLine($"{prefix} {step.Stage}: {step.Detail}", ConsoleColor.DarkGray);
     }
 
     private static void WriteField(string label, string value)
