@@ -1,0 +1,90 @@
+[
+  {
+    "customer_email": "alice@example.com",
+    "customer_name": "Alice",
+    "plan": "Premium",
+    "signup_date": "2026-03-30",
+    "last_charge_amount": 49.99,
+    "last_charge_date": "2026-03-30",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 1,
+    "account_status": "active"
+  },
+  {
+    "customer_email": "jordan.p@example.com",
+    "customer_name": "Jordan",
+    "plan": "Premium",
+    "signup_date": "2025-12-18",
+    "last_charge_amount": 49.99,
+    "last_charge_date": "2026-04-01",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 2,
+    "account_status": "past_due"
+  },
+  {
+    "customer_email": "sam.r@example.com",
+    "customer_name": "Sam",
+    "plan": "Basic",
+    "signup_date": "2025-10-07",
+    "last_charge_amount": 9.99,
+    "last_charge_date": "2026-04-03",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 1,
+    "account_status": "active"
+  },
+  {
+    "customer_email": "meera.k@example.com",
+    "customer_name": "Meera",
+    "plan": "Basic",
+    "signup_date": "2025-08-15",
+    "last_charge_amount": 9.99,
+    "last_charge_date": "2026-04-01",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 0,
+    "account_status": "active"
+  },
+  {
+    "customer_email": "dev.tan@example.com",
+    "customer_name": "Devon",
+    "plan": "Basic",
+    "signup_date": "2026-04-02",
+    "last_charge_amount": 9.99,
+    "last_charge_date": "2026-04-02",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 0,
+    "account_status": "trialing"
+  },
+  {
+    "customer_email": "rachel.b@example.com",
+    "customer_name": "Rachel",
+    "plan": "Premium",
+    "signup_date": "2025-02-20",
+    "last_charge_amount": 149.00,
+    "last_charge_date": "2026-04-05",
+    "refunds_last_12_months": 1,
+    "contacts_last_30_days": 3,
+    "account_status": "active"
+  },
+  {
+    "customer_email": "tomas.l@example.com",
+    "customer_name": "Thomas",
+    "plan": "Premium",
+    "signup_date": "2025-07-11",
+    "last_charge_amount": 49.99,
+    "last_charge_date": "2026-04-08",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 4,
+    "account_status": "active"
+  },
+  {
+    "customer_email": "priya.s@example.com",
+    "customer_name": "Priya",
+    "plan": "Premium",
+    "signup_date": "2024-11-04",
+    "last_charge_amount": 49.99,
+    "last_charge_date": "2026-04-04",
+    "refunds_last_12_months": 0,
+    "contacts_last_30_days": 1,
+    "account_status": "active"
+  }
+]
