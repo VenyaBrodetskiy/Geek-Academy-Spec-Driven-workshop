@@ -14,8 +14,7 @@ of capabilities:
   opening an escalation, or recording a refund request.
 
 The host (your Lab 1 app) stops producing text-only outputs and starts calling MCP
-tools where real behavior is needed. The result is a cleaner host/server boundary and
-a demo of how the same agent system can be extended with reusable tools.
+tools where real behavior is needed.
 
 ## Technologies
 
@@ -26,6 +25,8 @@ a demo of how the same agent system can be extended with reusable tools.
 - MCP
 - Console application
 - Local MCP server with mock data
+- Recommended for this workshop: Streamable HTTP MCP transport so the server can
+  be checked independently before it is connected to the agent.
 
 ## Starting Point
 
@@ -64,6 +65,19 @@ not need to do all of these):
 - Build a local MCP server exposing at least:
   - one data-access tool
   - one business-support action tool
+- Create the MCP server as a separate local app/project from the Lab 1 host app
+  so it can be run and tested independently.
+- Prefer a local Streamable HTTP MCP server for the first implementation. For
+  example, expose the MCP endpoint at `http://localhost:5058/mcp` and use
+  stateless transport if the server only handles request/response tools and does
+  not use elicitation, sampling, roots, or other server-to-client requests.
+- Before integrating with the Lab 1 app, validate the MCP server with MCP Inspector:
+  - Start the MCP server, for example `dotnet run --project support-ops-mcp-csharp`.
+  - Start Inspector with `npx -y @modelcontextprotocol/inspector`.
+  - In Inspector, choose Streamable HTTP transport and connect to
+    `http://localhost:5058/mcp`.
+  - Confirm the expected tools are listed.
+  - Call at least one data-access tool and one action tool successfully.
 - Integrate the MCP into your Lab 1 app so the host calls MCP where appropriate
   instead of only producing text.
 - Preserve the same customer-facing support experience from Lab 1.
