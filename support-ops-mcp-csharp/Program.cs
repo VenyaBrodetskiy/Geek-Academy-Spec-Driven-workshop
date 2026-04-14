@@ -10,6 +10,7 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"])
 }
 
 builder.Services.AddSingleton<SupportOpsDataStore>();
+builder.Services.AddSingleton<SupportTicketStorage>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(LocalInspectorCorsPolicy, policy =>

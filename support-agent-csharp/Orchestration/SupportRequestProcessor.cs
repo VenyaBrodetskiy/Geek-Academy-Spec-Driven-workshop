@@ -31,13 +31,27 @@ public class SupportRequestProcessor
 
         SupportRequestResult? result = null;
         SimulatedArtifact? artifact = null;
+        var trace = new List<WorkflowTraceStep>();
 
         foreach (var workflowEvent in run.NewEvents)
         {
             switch (workflowEvent)
             {
+                case IntakeCompletedEvent intakeCompleted:
+                    trace.Add(BuildIntakeTrace(intakeCompleted.Context));
+                    break;
+
+                case PolicyAppliedEvent policyApplied:
+                    trace.Add(BuildPolicyTrace(policyApplied.Context));
+                    break;
+
                 case ArtifactPreparedEvent artifactPrepared:
                     artifact = artifactPrepared.Artifact;
+                    trace.Add(BuildArtifactTrace(artifactPrepared.Artifact));
+                    break;
+
+                case ResponseDraftedEvent responseDrafted:
+                    trace.Add(BuildDraftTrace(responseDrafted.Draft));
                     break;
 
                 case WorkflowErrorEvent errorEvent:
@@ -45,6 +59,7 @@ public class SupportRequestProcessor
 
                 case WorkflowOutputEvent outputEvent when outputEvent.Is<SupportRequestResult>():
                     result = outputEvent.As<SupportRequestResult>();
+                    trace.Add(new WorkflowTraceStep("Complete", "SupportRequestResult produced."));
                     break;
             }
         }
@@ -54,7 +69,39 @@ public class SupportRequestProcessor
             throw new InvalidOperationException("Workflow completed without producing a SupportRequestResult.");
         }
 
-        return new SupportProcessingOutcome(result, artifact);
+        return new SupportProcessingOutcome(result, artifact, trace);
+    }
+
+    private static WorkflowTraceStep BuildIntakeTrace(IntakeContext context)
+    {
+        var facts = context.Intake.CustomerFacts;
+        return new WorkflowTraceStep(
+            "Intake",
+            $"Intent={context.Intake.PrimaryIntent}; Urgency={context.Intake.Urgency}; Lookup={facts.LookupStatus}; Summary={context.Intake.Summary}");
+    }
+
+    private static WorkflowTraceStep BuildPolicyTrace(PolicyContext context)
+    {
+        return new WorkflowTraceStep(
+            "Policy",
+            $"Route={context.Policy.Route}; Action={context.Policy.ActionTaken}; Next={context.Policy.RecommendedNextAction ?? "(none)"}");
+    }
+
+    private static WorkflowTraceStep BuildArtifactTrace(SimulatedArtifact artifact)
+    {
+        artifact.Metadata.TryGetValue("ticket_id", out var ticketId);
+        var suffix = string.IsNullOrWhiteSpace(ticketId) ? string.Empty : $"; Ticket={ticketId}";
+
+        return new WorkflowTraceStep(
+            "Artifact",
+            $"Type={artifact.ArtifactType}; Title={artifact.DisplayTitle}{suffix}");
+    }
+
+    private static WorkflowTraceStep BuildDraftTrace(CustomerMessageDraft draft)
+    {
+        return new WorkflowTraceStep(
+            "Draft",
+            $"Mode={draft.Mode}; Subject={draft.SubjectLine ?? "(none)"}");
     }
 
     private static Microsoft.Agents.AI.Workflows.Workflow BuildWorkflow(

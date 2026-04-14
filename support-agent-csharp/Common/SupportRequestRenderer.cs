@@ -8,6 +8,15 @@ public static class SupportRequestRenderer
     {
         var result = outcome.Result;
 
+        if (outcome.Trace.Count > 0)
+        {
+            ConsoleUi.WriteSectionTitle("Agent Trace", ConsoleColor.DarkCyan);
+            foreach (var step in outcome.Trace)
+            {
+                ConsoleUi.WriteColoredLine($"  - {step.Stage}: {step.Detail}", ConsoleColor.Gray);
+            }
+        }
+
         ConsoleUi.WriteSectionTitle("Classification", ConsoleColor.Cyan);
         WriteField("Intent", result.Intent.ToString());
         WriteField("Sentiment", result.Sentiment.ToString());

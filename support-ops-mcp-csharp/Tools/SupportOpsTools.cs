@@ -16,8 +16,6 @@ public static class SupportOpsTools
         "escalation"
     ];
 
-    private static int _nextTicketNumber = 1000;
-
     [McpServerTool(
         Name = "lookup_customer",
         Title = "Lookup customer",
@@ -53,6 +51,7 @@ public static class SupportOpsTools
         OutputSchemaType = typeof(SupportTicketResult))]
     [Description("Creates a mock SupportOps ticket for refund review, cancellation, or escalation handling.")]
     public static CallToolResult CreateSupportTicket(
+        SupportTicketStorage ticketStorage,
         [Description("Ticket kind. Supported values: refund_review, cancellation, escalation.")] string ticket_kind,
         [Description("Customer email address for the ticket.")] string customer_email,
         [Description("Short issue summary for support operators.")] string summary,
@@ -87,21 +86,14 @@ public static class SupportOpsTools
             return ToolError("Invalid ticket_kind. Supported values: refund_review, cancellation, escalation.");
         }
 
-        var ticketNumber = Interlocked.Increment(ref _nextTicketNumber);
-
-        var result = new SupportTicketResult(
-            TicketId: $"SUP-{ticketNumber}",
-            Status: "created",
-            Kind: kind,
-            Queue: ResolveQueue(kind),
-            CustomerEmail: email,
-            CreatedAtUtc: DateTimeOffset.UtcNow,
-            Summary: safeSummary,
-            Priority: safePriority,
-            Reason: safeReason,
-            RecommendedNextAction: string.IsNullOrWhiteSpace(recommended_next_action)
-                ? null
-                : recommended_next_action.Trim());
+        var result = ticketStorage.CreateResult(
+            kind,
+            ResolveQueue(kind),
+            email,
+            safeSummary,
+            safePriority,
+            safeReason,
+            string.IsNullOrWhiteSpace(recommended_next_action) ? null : recommended_next_action.Trim());
 
         return ToolSuccess(result);
     }
