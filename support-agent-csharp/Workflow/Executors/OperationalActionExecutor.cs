@@ -16,6 +16,12 @@ internal sealed class OperationalActionExecutor(string id) : Executor(id)
 
     private static async ValueTask<OperationalActionContext> HandleDraftAsync(DraftedResponseContext message, IWorkflowContext context)
     {
+        await context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(
+                "Artifact",
+                "Preparing deterministic clarification email artifact.",
+                WorkflowTraceStepKind.Detail)));
+
         var artifact = new SimulatedArtifact
         {
             ArtifactType = ArtifactType.ClarificationEmail,

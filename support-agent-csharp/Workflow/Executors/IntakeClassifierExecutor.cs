@@ -14,6 +14,7 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
     private readonly SupportOpsMcpToolProvider _supportOpsMcpToolProvider;
     private AIAgent? _agent;
     private AgentSession? _session;
+    private int _loadedToolCount;
 
     public IntakeClassifierExecutor(
         string id,
@@ -26,7 +27,16 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
 
     public override async ValueTask<IntakeContext> HandleAsync(ParsedSupportRequest message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
+        await AddTraceAsync(context, "Intake", "Preparing classifier agent.", cancellationToken);
         var agent = await GetAgentAsync(cancellationToken);
+        await AddTraceAsync(
+            context,
+            "MCP",
+            _loadedToolCount > 0
+                ? "lookup_customer tool is available to the intake agent."
+                : "lookup_customer tool is unavailable; intake will continue without MCP lookup.",
+            cancellationToken);
+
         _session ??= await agent.CreateSessionAsync(cancellationToken);
 
         var prompt =
@@ -42,6 +52,7 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
             """;
 
         var response = await agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
+        await AddTraceAsync(context, "Intake", "Classifier agent returned a response.", cancellationToken);
         var intake = await DeserializeIntakeAsync(response.Text, cancellationToken);
 
         intake.MissingInformation ??= [];
@@ -50,6 +61,7 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
         intake.ConfidenceNotes ??= string.Empty;
         intake.CustomerFacts ??= new CustomerFacts();
         NormalizeCustomerFacts(intake.CustomerFacts);
+        await AddLookupTraceAsync(context, intake.CustomerFacts, cancellationToken);
 
         var intakeContext = new IntakeContext
         {
@@ -71,6 +83,7 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
         }
 
         var tools = await _supportOpsMcpToolProvider.GetIntakeToolsAsync();
+        _loadedToolCount = tools.Count;
         ChatClientAgentOptions agentOptions = new()
         {
             ChatOptions = new()
@@ -139,4 +152,33 @@ internal sealed class IntakeClassifierExecutor : Executor<ParsedSupportRequest, 
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static ValueTask AddLookupTraceAsync(
+        IWorkflowContext context,
+        CustomerFacts facts,
+        CancellationToken cancellationToken)
+    {
+        var detail = facts.LookupStatus switch
+        {
+            CustomerLookupStatus.Found =>
+                $"lookup_customer returned Found for {facts.Email ?? "(unknown email)"}; plan={facts.Plan ?? "(unknown)"}; last_charge={facts.LastChargeAmount?.ToString() ?? "(unknown)"} on {facts.LastChargeDate ?? "(unknown date)"}.",
+            CustomerLookupStatus.NotFound =>
+                $"lookup_customer returned NotFound for {facts.Email ?? "(unknown email)"}.",
+            CustomerLookupStatus.Unavailable =>
+                "lookup_customer was unavailable or could not be used.",
+            _ => null
+        };
+
+        return detail is null
+            ? ValueTask.CompletedTask
+            : AddTraceAsync(context, "MCP", detail, cancellationToken);
+    }
+
+    private static ValueTask AddTraceAsync(
+        IWorkflowContext context,
+        string stage,
+        string detail,
+        CancellationToken cancellationToken)
+        => context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(stage, detail, WorkflowTraceStepKind.Detail)), cancellationToken);
 }

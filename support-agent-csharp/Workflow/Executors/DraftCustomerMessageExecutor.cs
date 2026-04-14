@@ -47,6 +47,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
     private async ValueTask<DraftedResponseContext> HandlePolicyAsync(PolicyContext message, IWorkflowContext context, CancellationToken cancellationToken)
     {
         _session ??= await _agent.CreateSessionAsync(cancellationToken);
+        await AddTraceAsync(context, "Draft", $"Drafting {message.Policy.MessageMode} response.", cancellationToken);
 
         var prompt =
             $"""
@@ -77,6 +78,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
             """;
 
         var response = await _agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
+        await AddTraceAsync(context, "Draft", "Customer message agent returned a response.", cancellationToken);
         var draft = await DeserializeDraftAsync(response.Text, cancellationToken);
 
         draft.Mode = message.Policy.MessageMode;
@@ -96,6 +98,11 @@ internal sealed class DraftCustomerMessageExecutor : Executor
     private async ValueTask<DraftedResponseContext> HandleOperationalAsync(OperationalActionContext message, IWorkflowContext context, CancellationToken cancellationToken)
     {
         _session ??= await _agent.CreateSessionAsync(cancellationToken);
+        await AddTraceAsync(
+            context,
+            "Draft",
+            $"Drafting {message.PolicyContext.Policy.MessageMode} response using artifact {message.Artifact.ArtifactType}.",
+            cancellationToken);
 
         var prompt =
             $"""
@@ -123,6 +130,7 @@ internal sealed class DraftCustomerMessageExecutor : Executor
             """;
 
         var response = await _agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
+        await AddTraceAsync(context, "Draft", "Customer message agent returned a response.", cancellationToken);
         var draft = await DeserializeDraftAsync(response.Text, cancellationToken);
 
         draft.Mode = message.PolicyContext.Policy.MessageMode;
@@ -182,4 +190,12 @@ internal sealed class DraftCustomerMessageExecutor : Executor
 
         throw new InvalidOperationException("Failed to deserialize CustomerMessageDraft after JSON repair retry.");
     }
+
+    private static ValueTask AddTraceAsync(
+        IWorkflowContext context,
+        string stage,
+        string detail,
+        CancellationToken cancellationToken)
+        => context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(stage, detail, WorkflowTraceStepKind.Detail)), cancellationToken);
 }

@@ -29,41 +29,63 @@ public class SupportRequestProcessor
     {
         var workflow = BuildWorkflow(_chatClient, _policyRules, _supportOpsMcpToolProvider);
 
-        await using var run = await InProcessExecution.OffThread.RunStreamingAsync(workflow, customerMessage);
-
         SupportRequestResult? result = null;
         SimulatedArtifact? artifact = null;
         var trace = new List<WorkflowTraceStep>();
+        var errorTraceEmitted = false;
 
-        await foreach (var workflowEvent in run.WatchStreamAsync())
+        try
         {
-            switch (workflowEvent)
+            await using var run = await InProcessExecution.OffThread.RunStreamingAsync(workflow, customerMessage);
+
+            await foreach (var workflowEvent in run.WatchStreamAsync())
             {
-                case IntakeCompletedEvent intakeCompleted:
-                    AddTrace(BuildIntakeTrace(intakeCompleted.Context));
-                    break;
+                switch (workflowEvent)
+                {
+                    case WorkflowTraceEvent traceEvent:
+                        AddTrace(traceEvent.Step);
+                        break;
 
-                case PolicyAppliedEvent policyApplied:
-                    AddTrace(BuildPolicyTrace(policyApplied.Context));
-                    break;
+                    case IntakeCompletedEvent intakeCompleted:
+                        AddTrace(BuildIntakeTrace(intakeCompleted.Context));
+                        break;
 
-                case ArtifactPreparedEvent artifactPrepared:
-                    artifact = artifactPrepared.Artifact;
-                    AddTrace(BuildArtifactTrace(artifactPrepared.Artifact));
-                    break;
+                    case PolicyAppliedEvent policyApplied:
+                        AddTrace(BuildPolicyTrace(policyApplied.Context));
+                        break;
 
-                case ResponseDraftedEvent responseDrafted:
-                    AddTrace(BuildDraftTrace(responseDrafted.Draft));
-                    break;
+                    case ArtifactPreparedEvent artifactPrepared:
+                        artifact = artifactPrepared.Artifact;
+                        AddTrace(BuildArtifactTrace(artifactPrepared.Artifact));
+                        break;
 
-                case WorkflowErrorEvent errorEvent:
-                    throw new InvalidOperationException($"Workflow execution failed: {errorEvent}");
+                    case ResponseDraftedEvent responseDrafted:
+                        AddTrace(BuildDraftTrace(responseDrafted.Draft));
+                        break;
 
-                case WorkflowOutputEvent outputEvent when outputEvent.Is<SupportRequestResult>():
-                    result = outputEvent.As<SupportRequestResult>();
-                    AddTrace(new WorkflowTraceStep("Complete", "SupportRequestResult produced."));
-                    break;
+                    case WorkflowErrorEvent errorEvent:
+                        AddTrace(new WorkflowTraceStep(
+                            "Error",
+                            $"Workflow execution failed: {errorEvent}",
+                            WorkflowTraceStepKind.Error));
+                        errorTraceEmitted = true;
+                        throw new InvalidOperationException($"Workflow execution failed: {errorEvent}");
+
+                    case WorkflowOutputEvent outputEvent when outputEvent.Is<SupportRequestResult>():
+                        result = outputEvent.As<SupportRequestResult>();
+                        AddTrace(new WorkflowTraceStep("Complete", "SupportRequestResult produced."));
+                        break;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            if (!errorTraceEmitted)
+            {
+                AddTrace(new WorkflowTraceStep("Error", ex.Message, WorkflowTraceStepKind.Error));
+            }
+
+            throw;
         }
 
         if (result is null)

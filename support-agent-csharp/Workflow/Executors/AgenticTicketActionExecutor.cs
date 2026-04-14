@@ -14,6 +14,7 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
     private readonly SupportOpsMcpToolProvider _supportOpsMcpToolProvider;
     private AIAgent? _agent;
     private AgentSession? _session;
+    private int _loadedToolCount;
 
     public AgenticTicketActionExecutor(
         string id,
@@ -35,7 +36,35 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
         }
 
         var expectedTicketKind = ResolveTicketKind(message.Policy.ActionTaken);
-        var agent = await GetAgentAsync(cancellationToken);
+        await AddTraceAsync(
+            context,
+            "Ticket action",
+            $"Policy route requires a {expectedTicketKind} SupportOps ticket.",
+            cancellationToken);
+
+        AIAgent agent;
+        try
+        {
+            agent = await GetAgentAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await AddTraceAsync(
+                context,
+                "MCP",
+                $"create_support_ticket could not be loaded: {ex.Message}",
+                cancellationToken);
+            throw;
+        }
+
+        await AddTraceAsync(
+            context,
+            "MCP",
+            _loadedToolCount > 0
+                ? "create_support_ticket tool is available to the ticket action agent."
+                : "create_support_ticket tool is unavailable.",
+            cancellationToken);
+
         _session ??= await agent.CreateSessionAsync(cancellationToken);
 
         var prompt =
@@ -65,9 +94,15 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
             """;
 
         var response = await agent.RunAsync(prompt, _session, cancellationToken: cancellationToken);
+        await AddTraceAsync(context, "Ticket action", "Ticket action agent returned a response.", cancellationToken);
         var decision = await DeserializeDecisionAsync(response.Text, cancellationToken);
         NormalizeDecision(decision);
         ValidateDecision(decision, expectedTicketKind);
+        await AddTraceAsync(
+            context,
+            "MCP",
+            $"create_support_ticket returned {decision.TicketId}; kind={decision.TicketKind}; queue={decision.Queue}.",
+            cancellationToken);
 
         var artifact = BuildArtifact(message, decision);
         await context.AddEventAsync(new ArtifactPreparedEvent(artifact), cancellationToken);
@@ -89,6 +124,7 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
         }
 
         var tools = await _supportOpsMcpToolProvider.GetTicketActionToolsAsync();
+        _loadedToolCount = tools.Count;
         ChatClientAgentOptions agentOptions = new()
         {
             ChatOptions = new()
@@ -251,4 +287,12 @@ internal sealed class AgenticTicketActionExecutor : Executor<PolicyContext, Oper
 
     private static string? NormalizeString(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static ValueTask AddTraceAsync(
+        IWorkflowContext context,
+        string stage,
+        string detail,
+        CancellationToken cancellationToken)
+        => context.AddEventAsync(new WorkflowTraceEvent(
+            new WorkflowTraceStep(stage, detail, WorkflowTraceStepKind.Detail)), cancellationToken);
 }

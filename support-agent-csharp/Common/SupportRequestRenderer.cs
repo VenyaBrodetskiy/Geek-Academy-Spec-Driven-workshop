@@ -49,7 +49,16 @@ public static class SupportRequestRenderer
         => ConsoleUi.WriteSectionTitle("Agent Trace", ConsoleColor.DarkGray);
 
     public static void RenderTraceStep(WorkflowTraceStep step)
-        => ConsoleUi.WriteColoredLine($"  - {step.Stage}: {step.Detail}", ConsoleColor.DarkGray);
+    {
+        var (prefix, color) = step.Kind switch
+        {
+            WorkflowTraceStepKind.Detail => ("   .", ConsoleColor.DarkGray),
+            WorkflowTraceStepKind.Error => ("  !", ConsoleColor.DarkGray),
+            _ => ("  -", ConsoleColor.DarkGray)
+        };
+
+        ConsoleUi.WriteColoredLine($"{prefix} {step.Stage}: {step.Detail}", color);
+    }
 
     private static void WriteField(string label, string value)
     {
