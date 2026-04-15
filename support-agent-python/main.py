@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from app import renderer
 from app.console_ui import (
     COLOR_CYAN,
-    COLOR_DARK_YELLOW,
     COLOR_GRAY,
     write_colored_line,
     write_section_title,
@@ -43,11 +42,6 @@ async def main() -> int:
 
         result = await processor.process(message)
         renderer.render(result)
-
-        write_colored_line(
-            "\n[Placeholder run — see SupportRequestProcessor.process to replace with your real flow]",
-            COLOR_DARK_YELLOW,
-        )
 
     return 0
 

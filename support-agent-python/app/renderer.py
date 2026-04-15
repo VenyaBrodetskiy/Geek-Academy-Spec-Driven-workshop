@@ -2,16 +2,24 @@ from app.console_ui import (
     COLOR_CYAN,
     COLOR_GRAY,
     COLOR_GREEN,
+    COLOR_MAGENTA,
     COLOR_RESET,
     COLOR_WHITE,
     COLOR_YELLOW,
     write_colored_line,
     write_section_title,
 )
-from app.models import SupportRequestResult
+from app.models import SupportProcessingOutcome, WorkflowTraceStep, WorkflowTraceStepKind
 
 
-def render(result: SupportRequestResult) -> None:
+def render(outcome: SupportProcessingOutcome, include_trace: bool = True) -> None:
+    result = outcome.result
+
+    if include_trace and outcome.trace:
+        write_section_title("Agent Trace", COLOR_GRAY)
+        for step in outcome.trace:
+            _render_trace_step(step)
+
     write_section_title("Classification", COLOR_CYAN)
     _write_field("Intent", result.intent.value)
     _write_field("Sentiment", result.sentiment.value)
@@ -28,6 +36,18 @@ def render(result: SupportRequestResult) -> None:
 
     write_section_title("Customer-Facing Response", COLOR_GREEN)
     write_colored_line(result.customer_facing_response, COLOR_YELLOW)
+
+    if outcome.artifact is not None:
+        write_section_title(outcome.artifact.display_title, COLOR_MAGENTA)
+        write_colored_line(outcome.artifact.payload, COLOR_GRAY)
+
+
+def _render_trace_step(step: WorkflowTraceStep) -> None:
+    prefix = {
+        WorkflowTraceStepKind.Detail: "   .",
+        WorkflowTraceStepKind.Error: "  !",
+    }.get(step.kind, "  -")
+    write_colored_line(f"{prefix} {step.stage}: {step.detail}", COLOR_GRAY)
 
 
 def _write_field(label: str, value: str) -> None:
